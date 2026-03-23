@@ -253,8 +253,8 @@ export default function App() {
   const runSwami = useCallback(async (pair) => {
     setSp(pair); setSl(true); setSt(""); setSpr(null);
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: `You are "The Swami." Analyze (Mar 2026): ${pair.topic} (${pair.cat})\nPoly: YES ${(pair.poly.yes * 100).toFixed(0)}¢ Vol ${pair.poly.vol}\nKalshi: YES ${(pair.kalshi.yes * 100).toFixed(0)}¢ Vol ${pair.kalshi.vol}\nSpread: ${pair.spread}¢\n\nJSON no backticks:\n{"side":"YES/NO/LEAN YES/LEAN NO","confidence":"High/Medium/Low","reasoning":"One sentence","analysis":"📊 OVERVIEW\\\n📱 SENTIMENT\\\n📈 HISTORY\\\n🎯 EDGE\\\n⚠️ RISKS"}` }] }) });
-      const d = await r.json(); const raw = (d.content || []).map(b => b.text || "").join("");
+      const r = await fetch("/api/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pair }) });
+      const d = await r.json(); const raw = d.raw || "";
       try { const p = JSON.parse(raw.replace(/```json|```/g, "").trim()); setSpr(p); setSt(p.analysis); } catch { setSt(raw); }
     } catch (e) { setSt("Error: " + e.message); } finally { setSl(false); }
   }, []);
@@ -262,8 +262,8 @@ export default function App() {
   const askSwami = useCallback(async () => {
     if (!askQ.trim() || askLd) return; setAskLd(true); setAskAns(""); setAskPred(null);
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 600, messages: [{ role: "user", content: `You are "The Swami" — prediction oracle.\nPredict: "${askQ.trim()}"\nJSON no backticks:\n{"side":"YES/NO/LEAN YES/LEAN NO/TOSS-UP","confidence":"High/Medium/Low","probability":"XX%","reasoning":"One sentence","analysis":"4-6 sentences: smart money, history, social sentiment, your take."}` }] }) });
-      const d = await r.json(); const raw = (d.content || []).map(b => b.text || "").join("");
+      const r = await fetch("/api/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: askQ.trim() }) });
+      const d = await r.json(); const raw = d.raw || "";
       try { const p = JSON.parse(raw.replace(/```json|```/g, "").trim()); setAskPred(p); setAskAns(p.analysis); setAskHist(h => [{ q: askQ.trim(), side: p.side, probability: p.probability }, ...h.slice(0, 9)]); }
       catch { setAskAns(raw); setAskPred({ side: "???", confidence: "—", probability: "—", reasoning: "Crystal ball fuzzy" }); }
     } catch (e) { setAskAns("Error: " + e.message); } finally { setAskLd(false); }
@@ -299,11 +299,11 @@ export default function App() {
         {/* ═══════════ HOME ═══════════ */}
         {tab === "home" && <div style={{ padding: pad }}>
           {/* HERO */}
-          <div style={{ textAlign: "center", padding: mob ? "20px 12px" : "28px 24px", marginBottom: 20, borderRadius: 20, background: `radial-gradient(ellipse at center top, ${T.purple}18, ${T.orange}08 50%, transparent 80%)`, border: `1px solid ${T.orange}22` }}>
-            <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ textAlign: "center", padding: mob ? "24px 16px" : "32px 32px", marginBottom: 24, borderRadius: 20, background: `radial-gradient(ellipse at center top, ${T.purple}14, ${T.orange}06 50%, transparent 80%)`, border: `1px solid ${T.orange}22` }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
               <SwamiCharacter size={mob ? 140 : 180} />
             </div>
-            <div style={{ fontSize: mob ? 26 : 36, fontWeight: 800, color: T.orange, letterSpacing: -1, marginTop: 8 }}>The Swami</div>
+            <div style={{ fontSize: mob ? 28 : 42, fontWeight: 800, color: T.orange, letterSpacing: -1 }}>The Swami</div>
             <div style={{ fontSize: mob ? 13 : 16, color: T.soft, marginTop: 4 }}>Your Prediction Markets Oracle</div>
             <div style={{ fontSize: mob ? 11 : 12, color: T.muted, marginTop: 8, maxWidth: 480, margin: "8px auto 0" }}>Data-driven predictions across Polymarket & Kalshi. Analyzing sentiment, history, and edge to find value.</div>
             
@@ -368,7 +368,7 @@ export default function App() {
 
         {/* ═══════════ TOP 5 ═══════════ */}
         {tab === "top5" && <div style={{ padding: pad }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
              <img src="/swami-top-5.jpg" alt="Swami's Top 5 Picks" style={{ maxWidth: "100%", maxHeight: 300, borderRadius: 16, boxShadow: `0 8px 30px ${T.purple}33` }} />
           </div>
           {[{ d: POLY, pl: "poly", c: T.green, n: "Polymarket" }, { d: KALSHI, pl: "kalshi", c: T.blue, n: "Kalshi" }].map(sec => (
@@ -419,11 +419,13 @@ export default function App() {
 
         {/* ═══════════ ASK ═══════════ */}
         {tab === "ask" && <div style={{ padding: pad }}>
-          <div style={{ textAlign: "center", marginBottom: 30 }}>
-            <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}><CrystalBall size={mob ? 100 : 130} /></div>
+            <div style={{ fontSize: mob ? 22 : 28, fontWeight: 800, color: T.orange }}>Ask The Swami</div>
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
               <img src="/ask-swami.jpg" alt="Ask The Swami" style={{ maxWidth: "100%", maxHeight: 350, borderRadius: 16, boxShadow: `0 10px 40px ${T.purple}44` }} />
             </div>
-            <div style={{ fontSize: 14, color: T.soft, marginTop: 16 }}>The Swami will predict any outcome with probability and reasoning.</div>
+            <div style={{ fontSize: 13, color: T.muted, marginTop: 16 }}>Type any question. The Swami will predict with probability and reasoning.</div>
           </div>
           <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
             <input type="text" value={askQ} onChange={e => setAskQ(e.target.value)} onKeyDown={e => { if (e.key === "Enter") askSwami(); }} placeholder="Will Bitcoin hit $150K by end of 2026?" style={{ flex: 1, background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: mob ? "12px 14px" : "10px 14px", color: T.text, fontSize: 14, outline: "none" }} />
@@ -464,17 +466,20 @@ export default function App() {
         </div>}
       </div>
 
-      {/* Mobile detail sheet */}
-      {mob && sel && <>
-        <div onClick={() => setSel(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 199 }} />
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: T.card, borderTop: `2px solid ${selP === "poly" ? T.green : T.blue}`, borderRadius: "20px 20px 0 0", padding: "16px 20px 32px", zIndex: 200, maxHeight: "70vh", overflowY: "auto" }}>
-          <div style={{ width: 40, height: 4, borderRadius: 2, background: T.border, margin: "0 auto 14px" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}><Bdg p={selP} /><button onClick={() => setSel(null)} style={{ background: "none", border: "none", color: T.muted, fontSize: 20, cursor: "pointer" }}>✕</button></div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: T.text, lineHeight: 1.4, marginBottom: 14 }}>{sel.q}</div>
-          <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+      {/* Detail Modal / Sheet */}
+      {sel && <>
+        <div onClick={() => setSel(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", backdropFilter: "blur(4px)", zIndex: 199 }} />
+        <div style={mob ? { position: "fixed", bottom: 0, left: 0, right: 0, background: T.card, borderTop: `2px solid ${selP === "poly" ? T.green : T.blue}`, borderRadius: "20px 20px 0 0", padding: "16px 20px 32px", zIndex: 200, maxHeight: "70vh", overflowY: "auto" } : { position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 440, background: T.card, borderTop: `4px solid ${selP === "poly" ? T.green : T.blue}`, borderRadius: 24, padding: "24px", zIndex: 200, maxHeight: "85vh", overflowY: "auto", boxShadow: `0 20px 60px rgba(0,0,0,0.8)` }}>
+          {mob && <div style={{ width: 40, height: 4, borderRadius: 2, background: T.border, margin: "0 auto 14px" }} />}
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}><Bdg p={selP} /><button onClick={() => setSel(null)} style={{ background: "none", border: "none", color: T.muted, fontSize: 20, cursor: "pointer" }}>✕</button></div>
+          <div style={{ fontSize: mob ? 16 : 18, fontWeight: 700, color: T.text, lineHeight: 1.4, marginBottom: 16 }}>{sel.q}</div>
+          <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
             <div style={{ flex: 1, background: T.green + "14", borderRadius: 12, padding: 12, textAlign: "center" }}><div style={{ fontSize: 9, color: T.green, fontWeight: 700 }}>YES</div><div style={{ fontSize: 28, fontWeight: 800, color: T.green, fontFamily: "monospace" }}>{(sel.yes * 100).toFixed(0)}¢</div></div>
             <div style={{ flex: 1, background: T.red + "14", borderRadius: 12, padding: 12, textAlign: "center" }}><div style={{ fontSize: 9, color: T.red, fontWeight: 700 }}>NO</div><div style={{ fontSize: 28, fontWeight: 800, color: T.red, fontFamily: "monospace" }}>{((1 - sel.yes) * 100).toFixed(0)}¢</div></div>
           </div>
+          <a href={`https://${selP === "poly" ? "polymarket.com" : "kalshi.com"}`} target="_blank" rel="noreferrer" style={{ display: "block", textDecoration: "none", background: `linear-gradient(135deg, ${selP === "poly" ? "#00c896" : "#2e7cf6"}, ${T.purple})`, color: "#fff", textAlign: "center", padding: "14px", borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+            Place Trade on {selP === "poly" ? "Polymarket" : "Kalshi"} ⚡
+          </a>
         </div>
       </>}
 
