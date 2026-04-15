@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "alpaca": {
+      "command": "uvx",
+      "args": [
+        "alpaca-mcp-server",
+        "--env-file",
+        ".env.local"
+      ]
+    }
+  }
+}
