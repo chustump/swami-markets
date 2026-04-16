@@ -1,0 +1,86 @@
+//@version=5
+strategy("Emanuel Trades Core Strategy - Base Breakout + Buy the Dip", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=2, commission_type=strategy.commission.percent, commission_value=0.04)
+
+// === INPUTS ===
+len20           = input.int(20, "20 SMA Length", minval=1)
+len200          = input.int(200, "200 SMA Length", minval=1)
+riskReward      = input.float(2.0, "Minimum Reward:Risk", minval=1.5, step=0.1)
+useBaseBreakout = input.bool(true, "Enable Base Breakout")
+useBuyTheDip    = input.bool(true, "Enable Buy the Dip (Retracement)")
+
+// === INDICATORS ===
+sma20  = ta.sma(close, len20)
+sma200 = ta.sma(close, len200)
+
+// Trend detection
+bullTrend = close > sma20 and sma20 > sma20[1] and sma20 > sma200
+bearTrend = close < sma20 and sma20 < sma20[1] and sma20 < sma200
+
+// Plot MAs
+plot(sma20,  color=color.blue,   title="20 SMA")
+plot(sma200, color=color.orange, title="200 SMA")
+
+// Background coloring for trend
+bgcolor(bullTrend ? color.new(color.green, 90) : bearTrend ? color.new(color.red, 90) : na, title="Trend Background")
+
+// === BASE BREAKOUT LOGIC ===
+// Tight consolidation: ATR contracting and current bar range is small
+atr       = ta.atr(14)
+tightBase = atr < atr[5] * 1.5 and (high - low) < atr * 1.2
+
+longBaseBreak  = useBaseBreakout and bullTrend and tightBase[1] and close > ta.highest(high, 5)[1] and close > sma20
+shortBaseBreak = useBaseBreakout and bearTrend and tightBase[1] and close < ta.lowest(low,  5)[1] and close < sma20
+
+// === BUY THE DIP (RETRACEMENT) LOGIC ===
+// Look for 3 PRIOR red bars (pullback that already happened) — the current bar
+// is the potential reversal/entry bar, so it should NOT be required to be red.
+redBars   = close < open
+consecRed = redBars[1] and redBars[2] and redBars[3]
+
+// Pullback depth — rough 35-65% retracement zone, with div-by-zero guard.
+hh10          = ta.highest(high, 10)
+ll10          = ta.lowest(low,  10)
+rng10         = hh10 - ll10
+pullbackDepth = rng10 > 0 ? (hh10 - low) / rng10 : 0.5
+inPullbackZone = pullbackDepth > 0.35 and pullbackDepth < 0.65 and close > sma20 and sma20 > sma20[5]
+
+// Manual doji detection (ta.doji does not exist in Pine v5):
+// body is <= 10% of the bar's total range.
+barRange    = high - low
+isDoji      = barRange > 0 and math.abs(close - open) <= barRange * 0.1
+narrowRange = barRange < atr * 0.8
+
+// Bullish reversal entry bar: green, doji, or narrow-range (compression)
+entryBarLong = (close > open) or isDoji or narrowRange
+longDip      = useBuyTheDip and bullTrend and consecRed and inPullbackZone and entryBarLong and close > high[1]
+
+// Short side (Sell-the-Rip) — mirrored
+consecGreen   = (close[1] > open[1]) and (close[2] > open[2]) and (close[3] > open[3])
+entryBarShort = (close < open) or isDoji or narrowRange
+shortDip      = useBuyTheDip and bearTrend and consecGreen and close < sma20 and sma20 < sma20[5] and entryBarShort and close < low[1]
+
+// === ENTRIES ===
+if (longBaseBreak or longDip)
+    strategy.entry("Long", strategy.long)
+    slLong = close * 0.98 // ~2% stop (adjust per setup)
+    tpLong = close + (close - slLong) * riskReward
+    strategy.exit("Long Exit", from_entry="Long", stop=slLong, limit=tpLong)
+
+if (shortBaseBreak or shortDip)
+    strategy.entry("Short", strategy.short)
+    slShort = close * 1.02
+    tpShort = close - (slShort - close) * riskReward
+    strategy.exit("Short Exit", from_entry="Short", stop=slShort, limit=tpShort)
+
+// === VISUALS ===
+plotshape(longBaseBreak  or longDip,  title="Long Signal",  location=location.belowbar, color=color.green, style=shape.triangleup,   size=size.small)
+plotshape(shortBaseBreak or shortDip, title="Short Signal", location=location.abovebar, color=color.red,   style=shape.triangledown, size=size.small)
+
+// Alerts
+alertcondition(longBaseBreak  or longDip,  title="Long Setup",  message="Emanuel Long Setup: Base Breakout or Buy the Dip")
+alertcondition(shortBaseBreak or shortDip, title="Short Setup", message="Emanuel Short Setup: Base Breakdown or Sell the Rip")
+
+// Table for quick info
+var table info = table.new(position.top_right, 1, 3)
+table.cell(info, 0, 0, "20 SMA Trend",    text_color = bullTrend ? color.green : bearTrend ? color.red : color.gray)
+table.cell(info, 0, 1, "Strategy Active", text_color = color.blue)
