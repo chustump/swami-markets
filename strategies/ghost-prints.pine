@@ -1,0 +1,251 @@
+//@version=5
+indicator("Ghost Prints — Dark Pool & Institutional Activity Detector", shorttitle="Ghost Prints", overlay=true, max_boxes_count=500, max_labels_count=500, max_lines_count=500)
+
+// =============================================================================
+// Ghost Prints Indicator
+// Inspired by TheoTrade's Ghost Prints concept (Brandon Chapman / Don Kaufman).
+// Detects hidden institutional footprints via volume anomalies, dark pool print
+// estimation, gravity-zone mapping, and VWAP proximity analysis.
+//
+// NOTE: TradingView does NOT provide actual dark-pool or off-exchange data.
+// This indicator *estimates* institutional activity from on-chart volume and
+// price behaviour — the same publicly-observable signals that institutions
+// leave behind when absorbing large positions with minimal price impact.
+// =============================================================================
+
+// === INPUTS ===
+// -- Volume Anomaly --
+grp_vol       = "Volume Anomaly Detection"
+volLen        = input.int(20,   "Volume SMA Length",            minval=5,   group=grp_vol)
+volMultLow    = input.float(1.5, "Volume Spike — Low Threshold (×SMA)", minval=1.0, step=0.1, group=grp_vol)
+volMultHigh   = input.float(3.0, "Volume Spike — High Threshold (×SMA)", minval=1.5, step=0.1, group=grp_vol)
+zScoreLen     = input.int(20,   "Z-Score Lookback",             minval=5,   group=grp_vol)
+zScoreThresh  = input.float(2.0, "Z-Score Threshold",           minval=1.0, step=0.1, group=grp_vol)
+
+// -- Dark Pool Print Estimation --
+grp_dp        = "Dark Pool Print Detection"
+bodyRatio     = input.float(0.3, "Max Body/Range Ratio (absorption)", minval=0.05, maxval=0.9, step=0.05, group=grp_dp)
+dpVolMult     = input.float(2.0, "Min Volume Multiple for Print",     minval=1.0, step=0.1,  group=grp_dp)
+
+// -- Gravity Zones --
+grp_gz        = "Gravity Zones"
+gzLookback    = input.int(50,   "Gravity Zone Lookback (bars)",  minval=10,  group=grp_gz)
+gzMinPrints   = input.int(2,    "Min Prints to Form Zone",      minval=1,   group=grp_gz)
+gzWidth       = input.float(0.5, "Zone Width (% of ATR)",        minval=0.1, step=0.1, group=grp_gz)
+showGzBoxes   = input.bool(true, "Show Gravity Zone Boxes",      group=grp_gz)
+
+// -- VWAP --
+grp_vwap      = "VWAP Analysis"
+useVwap       = input.bool(true, "Enable VWAP Proximity Filter", group=grp_vwap)
+vwapBand      = input.float(0.5, "VWAP Proximity Band (%)",     minval=0.1, step=0.1, group=grp_vwap)
+
+// -- Display --
+grp_disp      = "Display"
+showBullPrints = input.bool(true,  "Show Bullish Prints",  group=grp_disp)
+showBearPrints = input.bool(true,  "Show Bearish Prints",  group=grp_disp)
+showVolHisto   = input.bool(false, "Show Volume Anomaly Histogram (lower study)", group=grp_disp)
+labelSize      = input.string("small", "Label Size", options=["tiny","small","normal","large"], group=grp_disp)
+
+// === CALCULATIONS ===
+
+// --- Volume Statistics ---
+volSma   = ta.sma(volume, volLen)
+volStdev = ta.stdev(volume, zScoreLen)
+volMean  = ta.sma(volume, zScoreLen)
+zScore   = volStdev > 0 ? (volume - volMean) / volStdev : 0.0
+
+volSpike      = volume > volSma * volMultLow
+volSpikeHigh  = volume > volSma * volMultHigh
+zScoreSpike   = zScore >= zScoreThresh
+
+// --- Bar Body & Range ---
+barRange     = high - low
+barBody      = math.abs(close - open)
+bodyRangeRat = barRange > 0 ? barBody / barRange : 1.0
+
+// --- ATR ---
+atr = ta.atr(14)
+
+// --- VWAP ---
+vwapVal      = ta.vwap(hlc3)
+vwapProxPct  = vwapVal > 0 ? math.abs(close - vwapVal) / vwapVal * 100 : 999.0
+nearVwap     = vwapProxPct <= vwapBand
+
+// --- Accumulation / Distribution micro-signal ---
+// Positive = buying pressure (close near high), Negative = selling pressure
+adRatio = barRange > 0 ? ((close - low) - (high - close)) / barRange : 0.0
+
+// =============================================================================
+// GHOST PRINT DETECTION
+// A "ghost print" occurs when:
+//   1. Volume is anomalously high (spike OR z-score)
+//   2. Body-to-range ratio is small (price absorbed the volume — hidden order)
+//   3. Optionally near VWAP (institutional mean-reversion magnet)
+// =============================================================================
+
+isAbsorption = bodyRangeRat <= bodyRatio
+
+// Core ghost print conditions
+gpVolumeOk  = volSpike or zScoreSpike
+gpBodyOk    = isAbsorption
+gpVwapOk    = useVwap ? nearVwap : true
+
+ghostPrint = gpVolumeOk and gpBodyOk and gpVwapOk
+
+// Direction: use accumulation/distribution ratio
+bullPrint = ghostPrint and adRatio > 0    // Close nearer to high → accumulation
+bearPrint = ghostPrint and adRatio <= 0   // Close nearer to low  → distribution
+
+// Confidence scoring (1-4 stars)
+confScore  = 0
+confScore := confScore + (volSpikeHigh ? 2 : volSpike ? 1 : 0)
+confScore := confScore + (zScoreSpike  ? 1 : 0)
+confScore := confScore + (nearVwap     ? 1 : 0)
+confScore := math.min(confScore, 4)
+
+confStars = confScore >= 4 ? "★★★★" : confScore == 3 ? "★★★" : confScore == 2 ? "★★" : "★"
+
+// =============================================================================
+// GRAVITY ZONES
+// When multiple ghost prints cluster at similar price levels within the
+// lookback window, that level becomes a "gravity zone" — institutional S/R.
+// =============================================================================
+
+// Store ghost-print price levels in arrays
+var float[] gpPrices    = array.new_float(0)
+var int[]   gpBars      = array.new_int(0)
+var bool[]  gpIsBull    = array.new_bool(0)
+
+// Add new ghost prints
+if ghostPrint
+    array.push(gpPrices, math.avg(high, low))
+    array.push(gpBars,   bar_index)
+    array.push(gpIsBull, bullPrint)
+
+// Prune prints older than lookback
+if array.size(gpBars) > 0
+    while array.size(gpBars) > 0 and (bar_index - array.get(gpBars, 0)) > gzLookback
+        array.shift(gpPrices)
+        array.shift(gpBars)
+        array.shift(gpIsBull)
+
+// --- Gravity Zone Clustering ---
+// On each bar, scan the stored prints for price clusters.
+// A cluster = 2+ prints within gzWidth * ATR of each other.
+
+var float gzTop = na
+var float gzBot = na
+var bool  gzBull = true
+
+if showGzBoxes and bar_index % 5 == 0 and array.size(gpPrices) >= gzMinPrints
+    // Simple clustering: take the median price of stored prints, build a zone
+    float sumP = 0.0
+    int   cnt  = 0
+    int   bullCnt = 0
+    for i = 0 to array.size(gpPrices) - 1
+        sumP += array.get(gpPrices, i)
+        cnt  += 1
+        bullCnt += array.get(gpIsBull, i) ? 1 : 0
+
+    if cnt >= gzMinPrints
+        float midP  = sumP / cnt
+        float halfW = atr * gzWidth
+        // Count prints within the zone
+        int inZone = 0
+        for i = 0 to array.size(gpPrices) - 1
+            if math.abs(array.get(gpPrices, i) - midP) <= halfW
+                inZone += 1
+        if inZone >= gzMinPrints
+            gzTop  := midP + halfW
+            gzBot  := midP - halfW
+            gzBull := bullCnt > cnt / 2
+
+// Draw gravity zone box (refreshed periodically)
+var box gzBox = na
+if showGzBoxes and not na(gzTop) and not na(gzBot)
+    if not na(gzBox)
+        box.delete(gzBox)
+    gzBox := box.new(bar_index - gzLookback, gzTop, bar_index + 10, gzBot,
+                     bgcolor  = gzBull ? color.new(color.green, 85) : color.new(color.red, 85),
+                     border_color = gzBull ? color.new(color.green, 60) : color.new(color.red, 60),
+                     border_width = 1,
+                     text     = "Gravity Zone",
+                     text_color = color.gray)
+
+// =============================================================================
+// VISUALS
+// =============================================================================
+
+// --- VWAP ---
+plot(useVwap ? vwapVal : na, color=color.new(color.purple, 30), title="VWAP", linewidth=2)
+
+// --- Ghost Print Markers ---
+_lblSize = labelSize == "tiny" ? size.tiny : labelSize == "small" ? size.small : labelSize == "normal" ? size.normal : size.large
+
+plotshape(showBullPrints and bullPrint, title="Bull Ghost Print",
+         location=location.belowbar, style=shape.diamond, color=color.new(color.lime, 0),
+         size=size.small, text="GP", textcolor=color.new(color.lime, 0))
+
+plotshape(showBearPrints and bearPrint, title="Bear Ghost Print",
+         location=location.abovebar, style=shape.diamond, color=color.new(color.fuchsia, 0),
+         size=size.small, text="GP", textcolor=color.new(color.fuchsia, 0))
+
+// --- Confidence Labels ---
+if ghostPrint and confScore >= 2
+    lbl = bullPrint ? label.new(bar_index, low, confStars,
+                                style=label.style_label_up, color=color.new(color.green, 70),
+                                textcolor=color.white, size=_lblSize)
+                    : label.new(bar_index, high, confStars,
+                                style=label.style_label_down, color=color.new(color.red, 70),
+                                textcolor=color.white, size=_lblSize)
+
+// --- Volume Anomaly Histogram (optional) ---
+plot(showVolHisto ? zScore : na, title="Volume Z-Score", color=zScoreSpike ? color.orange : color.gray,
+     style=plot.style_histogram, linewidth=2)
+
+// --- Background flash on high-confidence prints ---
+bgcolor(ghostPrint and confScore >= 3 ? (bullPrint ? color.new(color.lime, 92) : color.new(color.fuchsia, 92)) : na,
+        title="High-Confidence Flash")
+
+// =============================================================================
+// ALERTS
+// =============================================================================
+alertcondition(bullPrint,                          title="Ghost Print — Bullish",        message="Bullish Ghost Print detected: institutional accumulation signal")
+alertcondition(bearPrint,                          title="Ghost Print — Bearish",        message="Bearish Ghost Print detected: institutional distribution signal")
+alertcondition(ghostPrint and confScore >= 3,      title="Ghost Print — High Confidence", message="High-confidence Ghost Print detected (3+ stars)")
+alertcondition(ghostPrint and nearVwap,            title="Ghost Print — Near VWAP",      message="Ghost Print detected near VWAP — strong institutional interest")
+
+// =============================================================================
+// INFO TABLE
+// =============================================================================
+var table infoTbl = table.new(position.top_right, 2, 6, bgcolor=color.new(color.black, 80), border_width=1)
+
+if barstate.islast
+    table.cell(infoTbl, 0, 0, "Ghost Prints",      text_color=color.white, text_size=size.small)
+    table.cell(infoTbl, 1, 0, "Console",            text_color=color.gray,  text_size=size.small)
+
+    // Count recent prints
+    int recentBull = 0
+    int recentBear = 0
+    for i = 0 to array.size(gpIsBull) - 1
+        if array.get(gpIsBull, i)
+            recentBull += 1
+        else
+            recentBear += 1
+
+    table.cell(infoTbl, 0, 1, "Bull Prints",        text_color=color.lime,    text_size=size.small)
+    table.cell(infoTbl, 1, 1, str.tostring(recentBull), text_color=color.lime, text_size=size.small)
+
+    table.cell(infoTbl, 0, 2, "Bear Prints",        text_color=color.fuchsia, text_size=size.small)
+    table.cell(infoTbl, 1, 2, str.tostring(recentBear), text_color=color.fuchsia, text_size=size.small)
+
+    string bias = recentBull > recentBear ? "ACCUMULATION" : recentBear > recentBull ? "DISTRIBUTION" : "NEUTRAL"
+    color  biasClr = recentBull > recentBear ? color.lime : recentBear > recentBull ? color.fuchsia : color.gray
+    table.cell(infoTbl, 0, 3, "Net Bias",           text_color=color.white,  text_size=size.small)
+    table.cell(infoTbl, 1, 3, bias,                  text_color=biasClr,     text_size=size.small)
+
+    table.cell(infoTbl, 0, 4, "Vol Z-Score",         text_color=color.white,  text_size=size.small)
+    table.cell(infoTbl, 1, 4, str.tostring(zScore, "#.##"), text_color=zScoreSpike ? color.orange : color.gray, text_size=size.small)
+
+    table.cell(infoTbl, 0, 5, "Near VWAP",           text_color=color.white,  text_size=size.small)
+    table.cell(infoTbl, 1, 5, nearVwap ? "YES" : "NO", text_color=nearVwap ? color.lime : color.gray, text_size=size.small)
