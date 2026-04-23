@@ -1,0 +1,216 @@
+//@version=5
+// =============================================================================
+// High-Confluence Stock Strategy (10-minute charts)
+// -----------------------------------------------------------------------------
+// Design goal: maximize win rate by requiring multiple independent signals
+// to align before taking a trade. Fewer trades, higher selectivity.
+//
+// NO STRATEGY GUARANTEES A FIXED WIN RATE. Backtest on your specific symbol
+// and date range. Typical confluence filters of this type have produced
+// 60-80% win rates in historical tests on liquid large-cap trending names,
+// but drawdowns and regime changes can and will degrade live performance.
+//
+// Stack of filters (ALL must align for entry):
+//   1. Trend:     EMA20 and EMA50 aligned, price on correct side
+//   2. Anchor:    price on correct side of session VWAP (institutional bias)
+//   3. Regime:    ADX > threshold (trending, not chop)
+//   4. Momentum:  RSI crosses back through 50 from pullback
+//   5. Volume:    bar volume > 1.2x 20-bar average (real participation)
+//   6. Session:   US regular hours only (09:30-16:00 ET)
+//
+// Exits:
+//   - Hard stop: N * ATR below entry
+//   - Take profit: 2R (configurable)
+//   - Trailing stop: activates after +1R, trails by ATR
+//   - Flatten at session close
+// =============================================================================
+strategy("High-Confluence Stock Strategy (10m)", overlay=true,
+     initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity,
+     default_qty_value=100,
+     pyramiding=0,
+     process_orders_on_close=true,
+     calc_on_every_tick=false,
+     commission_type=strategy.commission.percent,
+     commission_value=0.03,
+     slippage=2)
+
+// ---------- Inputs -----------------------------------------------------------
+grpTrend = "Trend Filter"
+emaFast  = input.int(20, "Fast EMA", minval=5, group=grpTrend)
+emaSlow  = input.int(50, "Slow EMA", minval=10, group=grpTrend)
+
+grpReg   = "Regime Filter"
+adxLen   = input.int(14, "ADX length", minval=5, group=grpReg)
+adxMin   = input.float(20.0, "Min ADX (trend strength)", minval=10, maxval=40, step=1, group=grpReg,
+     tooltip="Skip trades when ADX is below this - avoids choppy sideways markets.")
+
+grpMom   = "Momentum"
+rsiLen   = input.int(14, "RSI length", minval=5, group=grpMom)
+rsiBuyLo = input.int(40, "RSI pullback low (long)", minval=20, maxval=50, group=grpMom,
+     tooltip="Long setup requires RSI to dip below this then cross back above 50.")
+rsiSellHi= input.int(60, "RSI pullback high (short)", minval=50, maxval=80, group=grpMom,
+     tooltip="Short setup requires RSI to pop above this then cross back below 50.")
+
+grpVol   = "Volume"
+volLen   = input.int(20, "Volume avg length", minval=5, group=grpVol)
+volMult  = input.float(1.2, "Min relative volume", minval=1.0, step=0.1, group=grpVol)
+
+grpRisk  = "Risk & Targets"
+atrLen   = input.int(14, "ATR length", minval=5, group=grpRisk)
+slAtrMult= input.float(1.5, "Stop-loss (ATR mult)", minval=0.5, step=0.1, group=grpRisk)
+tpR      = input.float(2.0, "Take-profit (R multiple)", minval=1.0, step=0.5, group=grpRisk)
+trailR   = input.float(1.0, "Trail activation (R multiple)", minval=0.5, step=0.25, group=grpRisk)
+trailAtr = input.float(1.5, "Trail distance (ATR mult)", minval=0.5, step=0.1, group=grpRisk)
+riskPct  = input.float(1.0, "Risk per trade (% equity)", minval=0.1, maxval=5.0, step=0.1, group=grpRisk)
+
+grpSes   = "Session"
+sessTZ   = input.string("America/New_York", "Timezone", group=grpSes)
+sessStr  = input.session("0930-1600", "Regular trading hours", group=grpSes)
+flatEOD  = input.bool(true, "Flatten at session close", group=grpSes)
+allowShorts = input.bool(true, "Allow short trades", group=grpSes)
+
+grpViz   = "Visuals"
+showEma  = input.bool(true, "Plot EMAs", group=grpViz)
+showVwap = input.bool(true, "Plot VWAP", group=grpViz)
+showSig  = input.bool(true, "Show entry markers", group=grpViz)
+
+// ---------- Core indicators --------------------------------------------------
+ef  = ta.ema(close, emaFast)
+es  = ta.ema(close, emaSlow)
+rsi = ta.rsi(close, rsiLen)
+atr = ta.atr(atrLen)
+
+// Session-anchored VWAP (resets each new session).
+vwapVal = ta.vwap(hlc3)
+
+// Directional movement / ADX for regime detection.
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+
+// Relative volume.
+volAvg = ta.sma(volume, volLen)
+relVol = volume / volAvg
+
+// Session timing.
+inSession = not na(time(timeframe.period, sessStr, sessTZ))
+sessionEnded = not inSession and inSession[1]
+
+// ---------- Confluence conditions -------------------------------------------
+// Trend alignment: fast > slow and price above both (longs).
+trendUp   = ef > es and close > ef
+trendDown = ef < es and close < ef
+
+// VWAP bias.
+aboveVwap = close > vwapVal
+belowVwap = close < vwapVal
+
+// Regime.
+trending = adx > adxMin
+
+// Volume participation.
+volOk = relVol > volMult
+
+// RSI pullback-and-reversal.
+// Long: RSI dipped below rsiBuyLo in the last 5 bars, now crosses back up through 50.
+// Short: RSI popped above rsiSellHi in the last 5 bars, now crosses back down through 50.
+rsiDipped   = ta.lowest(rsi, 5) < rsiBuyLo
+rsiPopped   = ta.highest(rsi, 5) > rsiSellHi
+rsiCrossUp  = ta.crossover(rsi, 50)
+rsiCrossDn  = ta.crossunder(rsi, 50)
+
+// Final entry signals.
+longSignal  = inSession and trendUp   and aboveVwap and trending and volOk and rsiDipped and rsiCrossUp and strategy.position_size == 0
+shortSignal = allowShorts and inSession and trendDown and belowVwap and trending and volOk and rsiPopped and rsiCrossDn and strategy.position_size == 0
+
+// ---------- Risk & position sizing ------------------------------------------
+longStop   = close - slAtrMult * atr
+shortStop  = close + slAtrMult * atr
+longRisk   = close - longStop
+shortRisk  = shortStop - close
+longTarget = close + tpR * longRisk
+shortTarget= close - tpR * shortRisk
+
+equity   = strategy.equity
+riskCash = equity * (riskPct / 100.0)
+qtyLong  = longRisk  > 0 ? riskCash / longRisk  : 0
+qtyShort = shortRisk > 0 ? riskCash / shortRisk : 0
+
+// ---------- Entries ----------------------------------------------------------
+if longSignal and longRisk > 0
+    strategy.entry("Long", strategy.long, qty=qtyLong)
+    strategy.exit("Long Exit", from_entry="Long", stop=longStop, limit=longTarget)
+
+if shortSignal and shortRisk > 0
+    strategy.entry("Short", strategy.short, qty=qtyShort)
+    strategy.exit("Short Exit", from_entry="Short", stop=shortStop, limit=shortTarget)
+
+// ---------- Trailing stop (activates after +trailR R) -----------------------
+var float longTrail  = na
+var float shortTrail = na
+var float entryPx    = na
+var float entryRisk  = na
+
+if strategy.position_size > 0 and strategy.position_size[1] <= 0
+    entryPx   := strategy.position_avg_price
+    entryRisk := slAtrMult * atr
+    longTrail := na
+if strategy.position_size < 0 and strategy.position_size[1] >= 0
+    entryPx   := strategy.position_avg_price
+    entryRisk := slAtrMult * atr
+    shortTrail:= na
+if strategy.position_size == 0
+    longTrail := na
+    shortTrail:= na
+
+// Long trail: once +1R achieved, start a chandelier-style trail.
+if strategy.position_size > 0 and not na(entryPx) and not na(entryRisk)
+    reached = high - entryPx >= trailR * entryRisk
+    if reached
+        candidate = close - trailAtr * atr
+        longTrail := na(longTrail) ? candidate : math.max(longTrail, candidate)
+        strategy.exit("Long Trail", from_entry="Long", stop=longTrail, limit=longTarget)
+
+if strategy.position_size < 0 and not na(entryPx) and not na(entryRisk)
+    reached = entryPx - low >= trailR * entryRisk
+    if reached
+        candidate = close + trailAtr * atr
+        shortTrail := na(shortTrail) ? candidate : math.min(shortTrail, candidate)
+        strategy.exit("Short Trail", from_entry="Short", stop=shortTrail, limit=shortTarget)
+
+// ---------- End-of-session flatten ------------------------------------------
+if flatEOD and sessionEnded and strategy.position_size != 0
+    strategy.close_all(comment="Session end")
+
+// ---------- Plots ------------------------------------------------------------
+plot(showEma  ? ef      : na, "EMA Fast", color=color.new(color.yellow, 0), linewidth=1)
+plot(showEma  ? es      : na, "EMA Slow", color=color.new(color.orange, 0), linewidth=2)
+plot(showVwap ? vwapVal : na, "VWAP",     color=color.new(color.aqua, 0),   linewidth=2)
+
+plotshape(showSig and longSignal,  title="BUY",  style=shape.labelup,   location=location.belowbar,
+     color=color.new(color.green, 0), textcolor=color.white, text="BUY",  size=size.small)
+plotshape(showSig and shortSignal, title="SELL", style=shape.labeldown, location=location.abovebar,
+     color=color.new(color.red, 0),   textcolor=color.white, text="SELL", size=size.small)
+
+// Exit markers plotted automatically by strategy.exit, but also mark
+// discretionary session-close flattens.
+plotshape(showSig and flatEOD and sessionEnded and strategy.position_size[1] != 0,
+     title="EXIT-EOD", style=shape.xcross, location=location.abovebar,
+     color=color.new(color.gray, 0), size=size.tiny)
+
+// ---------- Status table ----------------------------------------------------
+var table info = table.new(position.top_right, 2, 7, border_width=1)
+if barstate.islast
+    f_row(r, k, v) =>
+        table.cell(info, 0, r, k, text_color=color.white, bgcolor=color.new(color.black, 70), text_size=size.small)
+        table.cell(info, 1, r, v, text_color=color.white, bgcolor=color.new(color.black, 70), text_size=size.small)
+    f_row(0, "Trend up",    trendUp   ? "YES" : "no")
+    f_row(1, "Trend down",  trendDown ? "YES" : "no")
+    f_row(2, "Above VWAP",  aboveVwap ? "YES" : "no")
+    f_row(3, "ADX > min",   trending  ? str.tostring(adx, "#.0") : "weak (" + str.tostring(adx, "#.0") + ")")
+    f_row(4, "Rel volume",  str.tostring(relVol, "#.00") + "x")
+    f_row(5, "RSI",         str.tostring(rsi, "#.0"))
+    f_row(6, "In session",  inSession ? "YES" : "no")
+
+// ---------- Alerts ----------------------------------------------------------
+alertcondition(longSignal,  title="Confluence BUY",  message="BUY signal: all confluence filters aligned on {{ticker}} {{interval}}")
+alertcondition(shortSignal, title="Confluence SELL", message="SELL signal: all confluence filters aligned on {{ticker}} {{interval}}")
