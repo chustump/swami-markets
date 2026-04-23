@@ -1,0 +1,238 @@
+//@version=5
+// =============================================================================
+// NY Open CHoCH + Fair Value Gap Strategy
+// -----------------------------------------------------------------------------
+// Repeatable framework:
+//   1. Wait for the New York session open (default 09:30 ET).
+//   2. Detect a Change of Character (CHoCH) - swing structure flip.
+//   3. Find the first unfilled Fair Value Gap (FVG) in the new direction.
+//   4. Enter a limit order at the FVG midpoint.
+//   5. Stop-loss placed just beyond the CHoCH structural swing.
+//   6. After a Break of Structure (BOS) in trade direction, SL moves to BE.
+//   7. Take profit at a user-defined R multiple (default 3R, tunable 3-4R).
+//
+// Philosophy: small fixed risk per trade, asymmetric payoff, ~50% or lower
+// win rate is acceptable because winners are 3-4x the size of losers.
+// =============================================================================
+strategy("NY Open CHoCH + FVG Strategy", overlay=true,
+     initial_capital=1000,
+     default_qty_type=strategy.percent_of_equity,
+     default_qty_value=100,
+     pyramiding=0,
+     calc_on_every_tick=false,
+     process_orders_on_close=true,
+     commission_type=strategy.commission.percent,
+     commission_value=0.02)
+
+// ---------- Inputs -----------------------------------------------------------
+grpSes   = "Session"
+sessTZ   = input.string("America/New_York", "Session timezone", group=grpSes)
+sessStr  = input.session("0930-1130", "Trade window (NY time)", group=grpSes,
+     tooltip="Only look for setups inside this window. Default is the first two hours of the NY session.")
+flatEOD  = input.bool(true, "Flatten at window close", group=grpSes)
+
+grpStr   = "Structure"
+swingLen = input.int(5, "Swing pivot length", minval=2, maxval=20, group=grpStr,
+     tooltip="Bars to each side used to confirm a swing high/low. Higher = smoother structure.")
+
+grpFVG   = "Fair Value Gap"
+minFvgR  = input.float(0.10, "Min FVG size (ATR mult)", minval=0.0, step=0.05, group=grpFVG,
+     tooltip="Reject FVGs smaller than this fraction of ATR - avoids noise.")
+fvgTTL   = input.int(30, "FVG max age (bars)", minval=1, group=grpFVG,
+     tooltip="Discard an FVG if price has not returned to its midpoint within this many bars.")
+
+grpRisk  = "Risk & Targets"
+rrTarget = input.float(3.0, "Reward:Risk target", minval=1.0, step=0.5, group=grpRisk)
+slPad    = input.float(0.10, "Stop padding (ATR mult)", minval=0.0, step=0.05, group=grpRisk,
+     tooltip="Extra buffer beyond the structural swing so stops are not hit by noise.")
+moveBE   = input.bool(true, "Move SL to break-even on BOS", group=grpRisk)
+riskPct  = input.float(1.0, "Risk per trade (% equity)", minval=0.1, maxval=5.0, step=0.1, group=grpRisk)
+
+grpViz   = "Visuals"
+showFvg  = input.bool(true, "Draw FVG boxes", group=grpViz)
+showSw   = input.bool(true, "Mark swing pivots", group=grpViz)
+showSes  = input.bool(true, "Shade session window", group=grpViz)
+
+// ---------- Session ----------------------------------------------------------
+inSession = not na(time(timeframe.period, sessStr, sessTZ))
+sessionStarted = inSession and not inSession[1]
+sessionEnded   = not inSession and inSession[1]
+bgcolor(showSes and inSession ? color.new(color.blue, 92) : na)
+
+// ---------- Volatility baseline ---------------------------------------------
+atr = ta.atr(14)
+
+// ---------- Swing structure (CHoCH / BOS detection) -------------------------
+// A confirmed swing pivot only becomes known `swingLen` bars after it prints.
+pvtHigh = ta.pivothigh(high, swingLen, swingLen)
+pvtLow  = ta.pivotlow (low , swingLen, swingLen)
+
+var float lastSwingHigh     = na
+var float lastSwingLow      = na
+var int   lastSwingHighBar  = na
+var int   lastSwingLowBar   = na
+// Track the two most recent swings of each type to identify HH/HL/LH/LL.
+var float prevSwingHigh     = na
+var float prevSwingLow      = na
+
+if not na(pvtHigh)
+    prevSwingHigh   := lastSwingHigh
+    lastSwingHigh   := pvtHigh
+    lastSwingHighBar := bar_index - swingLen
+    if showSw
+        label.new(bar_index - swingLen, pvtHigh, "H", style=label.style_label_down,
+             color=color.new(color.red, 70), textcolor=color.white, size=size.tiny)
+
+if not na(pvtLow)
+    prevSwingLow    := lastSwingLow
+    lastSwingLow    := pvtLow
+    lastSwingLowBar := bar_index - swingLen
+    if showSw
+        label.new(bar_index - swingLen, pvtLow, "L", style=label.style_label_up,
+             color=color.new(color.green, 70), textcolor=color.white, size=size.tiny)
+
+// Current market bias from swing sequence.
+// Bullish bias: rising highs AND rising lows. Bearish: falling highs AND falling lows.
+var int bias = 0  // 1 bullish, -1 bearish, 0 unknown
+biasPrev = bias
+if not na(lastSwingHigh) and not na(prevSwingHigh) and not na(lastSwingLow) and not na(prevSwingLow)
+    if lastSwingHigh > prevSwingHigh and lastSwingLow > prevSwingLow
+        bias := 1
+    else if lastSwingHigh < prevSwingHigh and lastSwingLow < prevSwingLow
+        bias := -1
+
+// CHoCH = break of the opposing-side swing that flips bias.
+// Bullish CHoCH: in a bearish structure, close breaks above last swing high.
+// Bearish CHoCH: in a bullish structure, close breaks below last swing low.
+chochBull = biasPrev != 1 and not na(lastSwingHigh) and close > lastSwingHigh
+chochBear = biasPrev != -1 and not na(lastSwingLow)  and close < lastSwingLow
+
+// Track the structural low/high at the moment of CHoCH - used for stop placement.
+var float chochAnchorLow  = na   // for longs
+var float chochAnchorHigh = na   // for shorts
+var int   dirSignal       = 0    // 1 long setup, -1 short setup, 0 none
+var int   chochBar        = na
+
+if chochBull
+    bias := 1
+    dirSignal := 1
+    chochAnchorLow  := lastSwingLow
+    chochBar := bar_index
+if chochBear
+    bias := -1
+    dirSignal := -1
+    chochAnchorHigh := lastSwingHigh
+    chochBar := bar_index
+
+// ---------- Fair Value Gap detection ----------------------------------------
+// Three-bar FVG: gap between bar[2] extreme and current bar opposite extreme.
+// Bullish FVG: low of current > high of bar[2].
+// Bearish FVG: high of current < low of bar[2].
+bullFvg = low > high[2]
+bearFvg = high < low[2]
+
+fvgSize     = bullFvg ? low - high[2] : bearFvg ? low[2] - high : 0.0
+fvgValid    = fvgSize > minFvgR * atr
+
+// Store the most recent valid FVG in the direction of the current setup.
+var float fvgTop    = na
+var float fvgBot    = na
+var float fvgMid    = na
+var int   fvgBar    = na
+var int   fvgDir    = 0
+var box   fvgBox    = na
+
+f_newFvg(_top, _bot, _dir) =>
+    fvgTop := _top
+    fvgBot := _bot
+    fvgMid := (_top + _bot) / 2.0
+    fvgBar := bar_index
+    fvgDir := _dir
+    if showFvg
+        if not na(fvgBox)
+            box.delete(fvgBox)
+        col = _dir == 1 ? color.new(color.green, 80) : color.new(color.red, 80)
+        fvgBox := box.new(bar_index - 2, _top, bar_index + fvgTTL, _bot,
+             border_color=col, bgcolor=col)
+
+// Only arm an FVG when it aligns with the active CHoCH direction.
+if inSession and fvgValid
+    if bullFvg and dirSignal == 1
+        f_newFvg(low, high[2], 1)
+    else if bearFvg and dirSignal == -1
+        f_newFvg(low[2], high, -1)
+
+// Expire stale FVGs.
+if not na(fvgBar) and bar_index - fvgBar > fvgTTL
+    fvgTop := na
+    fvgBot := na
+    fvgMid := na
+    fvgDir := 0
+
+// ---------- Entry ------------------------------------------------------------
+// Enter at FVG midpoint with stop beyond the CHoCH structural swing.
+canLong  = inSession and dirSignal == 1  and not na(fvgMid) and fvgDir == 1
+     and not na(chochAnchorLow)  and strategy.position_size == 0
+canShort = inSession and dirSignal == -1 and not na(fvgMid) and fvgDir == -1
+     and not na(chochAnchorHigh) and strategy.position_size == 0
+
+longEntry  = fvgMid
+longStop   = chochAnchorLow  - slPad * atr
+longRisk   = longEntry - longStop
+longTarget = longEntry + rrTarget * longRisk
+
+shortEntry  = fvgMid
+shortStop   = chochAnchorHigh + slPad * atr
+shortRisk   = shortStop - shortEntry
+shortTarget = shortEntry - rrTarget * shortRisk
+
+// Position sizing so fixed % equity is at risk per trade.
+equity   = strategy.equity
+riskCash = equity * (riskPct / 100.0)
+qtyLong  = longRisk  > 0 ? riskCash / longRisk  : 0
+qtyShort = shortRisk > 0 ? riskCash / shortRisk : 0
+
+if canLong and longRisk > 0
+    strategy.entry("Long", strategy.long, qty=qtyLong, limit=longEntry)
+    strategy.exit("Long TP/SL", from_entry="Long", limit=longTarget, stop=longStop)
+
+if canShort and shortRisk > 0
+    strategy.entry("Short", strategy.short, qty=qtyShort, limit=shortEntry)
+    strategy.exit("Short TP/SL", from_entry="Short", limit=shortTarget, stop=shortStop)
+
+// ---------- Break-even management -------------------------------------------
+// Once price breaks the most recent swing in the trade direction (BOS), trail SL to entry.
+var bool longBE  = false
+var bool shortBE = false
+if strategy.position_size == 0
+    longBE  := false
+    shortBE := false
+
+bosLong  = strategy.position_size > 0 and not longBE  and not na(lastSwingHigh) and close > lastSwingHigh
+bosShort = strategy.position_size < 0 and not shortBE and not na(lastSwingLow)  and close < lastSwingLow
+
+if moveBE and bosLong
+    longBE := true
+    strategy.exit("Long BE", from_entry="Long", limit=longTarget, stop=strategy.position_avg_price)
+if moveBE and bosShort
+    shortBE := true
+    strategy.exit("Short BE", from_entry="Short", limit=shortTarget, stop=strategy.position_avg_price)
+
+// ---------- End-of-window flatten -------------------------------------------
+if flatEOD and sessionEnded and strategy.position_size != 0
+    strategy.close_all(comment="Session end")
+
+// Cancel unfilled limit orders when the window closes so we don't enter late.
+if sessionEnded
+    strategy.cancel_all()
+
+// ---------- Plots ------------------------------------------------------------
+plot(strategy.position_size > 0 ? strategy.position_avg_price : na, "Long entry",
+     color=color.new(color.green, 0), style=plot.style_linebr, linewidth=2)
+plot(strategy.position_size < 0 ? strategy.position_avg_price : na, "Short entry",
+     color=color.new(color.red, 0), style=plot.style_linebr, linewidth=2)
+
+plotshape(chochBull, title="CHoCH Bull", style=shape.triangleup, location=location.belowbar,
+     color=color.new(color.green, 0), size=size.tiny, text="CHoCH")
+plotshape(chochBear, title="CHoCH Bear", style=shape.triangledown, location=location.abovebar,
+     color=color.new(color.red, 0), size=size.tiny, text="CHoCH")
