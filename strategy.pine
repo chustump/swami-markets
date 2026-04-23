@@ -142,25 +142,28 @@ var int   fvgBar    = na
 var int   fvgDir    = 0
 var box   fvgBox    = na
 
-f_newFvg(_top, _bot, _dir) =>
-    fvgTop := _top
-    fvgBot := _bot
-    fvgMid := (_top + _bot) / 2.0
+// Only arm an FVG when it aligns with the active CHoCH direction.
+// Pine v5 forbids writing to global `var`s from inside a function,
+// so the assignment is inlined here.
+newFvgTop = inSession and fvgValid and bullFvg and dirSignal == 1  ? low     :
+     inSession and fvgValid and bearFvg and dirSignal == -1 ? low[2]  : na
+newFvgBot = inSession and fvgValid and bullFvg and dirSignal == 1  ? high[2] :
+     inSession and fvgValid and bearFvg and dirSignal == -1 ? high    : na
+newFvgDir = inSession and fvgValid and bullFvg and dirSignal == 1  ?  1 :
+     inSession and fvgValid and bearFvg and dirSignal == -1 ? -1 : 0
+
+if newFvgDir != 0
+    fvgTop := newFvgTop
+    fvgBot := newFvgBot
+    fvgMid := (newFvgTop + newFvgBot) / 2.0
     fvgBar := bar_index
-    fvgDir := _dir
+    fvgDir := newFvgDir
     if showFvg
         if not na(fvgBox)
             box.delete(fvgBox)
-        col = _dir == 1 ? color.new(color.green, 80) : color.new(color.red, 80)
-        fvgBox := box.new(bar_index - 2, _top, bar_index + fvgTTL, _bot,
+        col = newFvgDir == 1 ? color.new(color.green, 80) : color.new(color.red, 80)
+        fvgBox := box.new(bar_index - 2, newFvgTop, bar_index + fvgTTL, newFvgBot,
              border_color=col, bgcolor=col)
-
-// Only arm an FVG when it aligns with the active CHoCH direction.
-if inSession and fvgValid
-    if bullFvg and dirSignal == 1
-        f_newFvg(low, high[2], 1)
-    else if bearFvg and dirSignal == -1
-        f_newFvg(low[2], high, -1)
 
 // Expire stale FVGs.
 if not na(fvgBar) and bar_index - fvgBar > fvgTTL
