@@ -198,18 +198,20 @@ plotshape(showSig and flatEOD and sessionEnded and strategy.position_size[1] != 
      color=color.new(color.gray, 0), size=size.tiny)
 
 // ---------- Status table ----------------------------------------------------
+// User-defined functions must be at global scope in Pine v5.
+f_row(_info, _r, _k, _v) =>
+    table.cell(_info, 0, _r, _k, text_color=color.white, bgcolor=color.new(color.black, 70), text_size=size.small)
+    table.cell(_info, 1, _r, _v, text_color=color.white, bgcolor=color.new(color.black, 70), text_size=size.small)
+
 var table info = table.new(position.top_right, 2, 7, border_width=1)
 if barstate.islast
-    f_row(r, k, v) =>
-        table.cell(info, 0, r, k, text_color=color.white, bgcolor=color.new(color.black, 70), text_size=size.small)
-        table.cell(info, 1, r, v, text_color=color.white, bgcolor=color.new(color.black, 70), text_size=size.small)
-    f_row(0, "Trend up",    trendUp   ? "YES" : "no")
-    f_row(1, "Trend down",  trendDown ? "YES" : "no")
-    f_row(2, "Above VWAP",  aboveVwap ? "YES" : "no")
-    f_row(3, "ADX > min",   trending  ? str.tostring(adx, "#.0") : "weak (" + str.tostring(adx, "#.0") + ")")
-    f_row(4, "Rel volume",  str.tostring(relVol, "#.00") + "x")
-    f_row(5, "RSI",         str.tostring(rsi, "#.0"))
-    f_row(6, "In session",  inSession ? "YES" : "no")
+    f_row(info, 0, "Trend up",    trendUp   ? "YES" : "no")
+    f_row(info, 1, "Trend down",  trendDown ? "YES" : "no")
+    f_row(info, 2, "Above VWAP",  aboveVwap ? "YES" : "no")
+    f_row(info, 3, "ADX > min",   trending  ? str.tostring(adx, "#.0") : "weak (" + str.tostring(adx, "#.0") + ")")
+    f_row(info, 4, "Rel volume",  str.tostring(relVol, "#.00") + "x")
+    f_row(info, 5, "RSI",         str.tostring(rsi, "#.0"))
+    f_row(info, 6, "In session",  inSession ? "YES" : "no")
 
 // ---------- Alerts ----------------------------------------------------------
 alertcondition(longSignal,  title="Confluence BUY",  message="BUY signal: all confluence filters aligned on {{ticker}} {{interval}}")
