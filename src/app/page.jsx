@@ -286,9 +286,12 @@ export default function App() {
             <div style={{ fontSize: mob ? 9 : 10, color: T.dim }}><span style={{ color: T.green }}>Polymarket</span> × <span style={{ color: T.blue }}>Kalshi</span></div>
           </div>
         </div>
-        {!mob && <div style={{ display: "flex", gap: 3, background: T.card, borderRadius: 10, padding: 3, border: `1px solid ${T.border}` }}>
-          {tabs.map(t => <button key={t.k} onClick={() => setTab(t.k)} style={{ background: tab === t.k ? T.hover : "transparent", border: "none", borderRadius: 8, padding: "6px 12px", color: tab === t.k ? T.text : T.muted, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}
-        </div>}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {!mob && <div style={{ display: "flex", gap: 3, background: T.card, borderRadius: 10, padding: 3, border: `1px solid ${T.border}` }}>
+            {tabs.map(t => <button key={t.k} onClick={() => setTab(t.k)} style={{ background: tab === t.k ? T.hover : "transparent", border: "none", borderRadius: 8, padding: "6px 12px", color: tab === t.k ? T.text : T.muted, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}
+          </div>}
+          <a href="/clawdbot" style={{ fontSize: mob ? 10 : 11, fontWeight: 700, padding: mob ? "5px 9px" : "6px 11px", borderRadius: 8, background: `linear-gradient(135deg, ${T.purple}, ${T.orange})`, color: "#fff", textDecoration: "none", whiteSpace: "nowrap" }}>Clawdbot →</a>
+        </div>
       </div>
       {mob && <div style={{ display: "flex", borderBottom: `1px solid ${T.border}`, background: T.sf, position: "sticky", top: 46, zIndex: 99 }}>
         {tabs.map(t => <button key={t.k} onClick={() => setTab(t.k)} style={{ flex: 1, background: "transparent", border: "none", borderBottom: tab === t.k ? `2px solid ${T.orange}` : "2px solid transparent", padding: "8px 4px", color: tab === t.k ? T.text : T.muted, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}
