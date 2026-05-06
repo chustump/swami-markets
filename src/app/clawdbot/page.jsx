@@ -88,6 +88,67 @@ export default function ClawdbotHome() {
         </div>
       </section>
 
+      <section style={{ marginBottom: 48 }}>
+        <h2 style={sectionHeadingStyle}>Agents</h2>
+        <Link
+          href="/clawdbot/leads"
+          style={{
+            display: "block",
+            textDecoration: "none",
+            borderRadius: 16,
+            padding: 24,
+            background:
+              "linear-gradient(135deg, rgba(34,211,238,0.18), rgba(124,58,237,0.18) 50%, rgba(255,140,66,0.18))",
+            border: "1px solid rgba(34,211,238,0.35)",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 16,
+                background: "linear-gradient(135deg, #22d3ee, #7c3aed 60%, #ff8c42)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 34,
+                flexShrink: 0,
+              }}
+            >
+              🎯
+            </div>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <div style={{ fontSize: 12, color: "#67e8f9", fontWeight: 700, letterSpacing: 0.4, marginBottom: 4 }}>
+                AUTONOMOUS AGENT
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", marginBottom: 4 }}>
+                Lead Hunter for Insights
+              </div>
+              <div style={{ color: "#cbd5e1", fontSize: 14, lineHeight: 1.5 }}>
+                Searches the web, profiles companies, identifies decision-makers, and saves
+                qualified leads — all on its own. Tool-use loop powered by Claude.
+              </div>
+            </div>
+            <div
+              style={{
+                padding: "12px 20px",
+                borderRadius: 10,
+                background: "linear-gradient(135deg, #22d3ee, #7c3aed)",
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: 14,
+                whiteSpace: "nowrap",
+              }}
+            >
+              Run agent →
+            </div>
+          </div>
+        </Link>
+      </section>
+
       {mounted && userBots.length > 0 && (
         <section style={{ marginBottom: 48 }}>
           <h2 style={sectionHeadingStyle}>Your bots</h2>
