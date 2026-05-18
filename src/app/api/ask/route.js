@@ -1,4 +1,10 @@
 import { NextResponse } from 'next/server';
+import { predictQuestion } from '../../../lib/oracle';
+
+function fallback(question) {
+  const pred = predictQuestion(question);
+  return NextResponse.json({ raw: JSON.stringify(pred), source: 'heuristic' });
+}
 
 export async function POST(request) {
   try {
@@ -9,7 +15,7 @@ export async function POST(request) {
     }
 
     if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json({ raw: '{"side":"???","confidence":"—","probability":"—","reasoning":"Missing API Key. Please add ANTHROPIC_API_KEY to your environment variables!","analysis":"⚠️ The Oracle is unable to connect to the mystical plane because the Anthropic API Key is missing. Please add it to your .env.local file or Netlify dashboard."}' }, { status: 200 });
+      return fallback(question);
     }
 
     const prompt = `You are "The Swami" — prediction oracle.
@@ -33,13 +39,18 @@ JSON no backticks:
 
     const d = await r.json();
     if (!r.ok) {
-      throw new Error(d.error?.message || 'Anthropic API Error');
+      console.error('Anthropic error, falling back to heuristic:', d.error?.message);
+      return fallback(question);
     }
 
     const raw = (d.content || []).map(b => b.text || "").join("");
-    return NextResponse.json({ raw });
+    return NextResponse.json({ raw, source: 'llm' });
   } catch (error) {
     console.error('Ask error:', error);
+    try {
+      const body = await request.clone().json().catch(() => ({}));
+      if (body?.question) return fallback(body.question);
+    } catch {}
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
