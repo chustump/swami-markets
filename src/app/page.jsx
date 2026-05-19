@@ -152,7 +152,7 @@ function useIsMobile() {
 }
 
 /* ══ Theme ═════════════════════════════════════════════════════ */
-const T = { bg: "#060710", sf: "#0c0e16", card: "#11131c", hover: "#191c28", border: "#1b1f30", text: "#e6e8f0", soft: "#a2a6bc", muted: "#636882", dim: "#3c3f54", green: "#00e5b0", red: "#ff5274", blue: "#5890ff", yellow: "#ffc84a", purple: "#a66dff", orange: "#ff8c42", gold: "#FFD700" };
+const T = { bg: "#050610", sf: "#0a0c16", card: "#10131e", hover: "#191d2c", border: "#222742", text: "#eef0fa", soft: "#aab0c8", muted: "#6b7290", dim: "#3c3f54", green: "#1eecaf", red: "#ff5277", blue: "#6ea0ff", yellow: "#ffd05a", purple: "#b682ff", orange: "#ff974d", gold: "#FFD466" };
 
 /* ══ Data ══════════════════════════════════════════════════════ */
 const POLY = [
@@ -274,11 +274,14 @@ export default function App() {
   const pad = mob ? "0 16px" : "0";
 
   return (
-    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'DM Sans','Segoe UI',system-ui,sans-serif", paddingBottom: "100px" }}>
+    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'DM Sans','Segoe UI',system-ui,sans-serif", paddingBottom: "100px", position: "relative", overflow: "hidden" }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
 
+      {/* AURORA BACKDROP */}
+      <div className="aurora" aria-hidden="true" />
+
       {/* HEADER */}
-      <div style={{ borderBottom: `1px solid ${T.border}`, padding: mob ? "8px 16px" : "10px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", background: T.sf + "ee", backdropFilter: "blur(16px)", position: "sticky", top: 0, zIndex: 100 }}>
+      <div style={{ borderBottom: `1px solid ${T.border}`, padding: mob ? "10px 16px" : "12px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(10,12,22,0.7)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ display: "flex", alignItems: "center", gap: mob ? 8 : 12 }}>
           <SwamiMini size={mob ? 30 : 36} />
           <div>
@@ -294,45 +297,68 @@ export default function App() {
         {tabs.map(t => <button key={t.k} onClick={() => setTab(t.k)} style={{ flex: 1, background: "transparent", border: "none", borderBottom: tab === t.k ? `2px solid ${T.orange}` : "2px solid transparent", padding: "8px 4px", color: tab === t.k ? T.text : T.muted, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}
       </div>}
 
-      <div style={{ maxWidth: 1360, margin: "0 auto", padding: mob ? "14px 0" : "16px 24px" }}>
+      <div style={{ maxWidth: 1360, margin: "0 auto", padding: mob ? "14px 0" : "16px 24px", position: "relative", zIndex: 1 }}>
 
         {/* ═══════════ HOME ═══════════ */}
         {tab === "home" && <div style={{ padding: pad }}>
           {/* HERO */}
-          <div style={{ textAlign: "center", padding: mob ? "24px 16px" : "32px 32px", marginBottom: 24, borderRadius: 20, background: `radial-gradient(ellipse at center top, ${T.purple}14, ${T.orange}06 50%, transparent 80%)`, border: `1px solid ${T.orange}22` }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
-              <SwamiCharacter size={mob ? 140 : 180} />
+          <div className="fade-up" style={{ textAlign: "center", padding: mob ? "28px 18px 32px" : "48px 32px 40px", marginBottom: 28, borderRadius: 24, position: "relative", overflow: "hidden", background: `radial-gradient(ellipse at 50% 0%, ${T.purple}22, ${T.orange}0d 45%, transparent 78%)`, border: `1px solid rgba(255,255,255,0.06)`, boxShadow: `0 30px 80px -30px ${T.purple}33, inset 0 1px 0 rgba(255,255,255,0.04)` }}>
+
+            {/* live pill */}
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 999, background: "rgba(30,236,175,0.08)", border: `1px solid ${T.green}33`, fontSize: 11, fontWeight: 600, color: T.green, letterSpacing: 0.5, marginBottom: 18 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.green, boxShadow: `0 0 10px ${T.green}` }} />
+              LIVE · Polymarket × Kalshi
             </div>
-            <div style={{ fontSize: mob ? 28 : 42, fontWeight: 800, color: T.orange, letterSpacing: -1 }}>The Swami</div>
-            <div style={{ fontSize: mob ? 13 : 16, color: T.soft, marginTop: 4 }}>Your Prediction Markets Oracle</div>
-            <div style={{ fontSize: mob ? 11 : 12, color: T.muted, marginTop: 8, maxWidth: 480, margin: "8px auto 0" }}>Data-driven predictions across Polymarket & Kalshi. Analyzing sentiment, history, and edge to find value.</div>
-            
+
+            <div className="float" style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
+              <SwamiCharacter size={mob ? 150 : 200} />
+            </div>
+            <div style={{ fontSize: mob ? 34 : 56, fontWeight: 800, letterSpacing: -1.5, lineHeight: 1, background: `linear-gradient(135deg, ${T.orange} 0%, ${T.gold} 35%, ${T.purple} 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>The Swami</div>
+            <div style={{ fontSize: mob ? 14 : 18, color: T.soft, marginTop: 10, fontWeight: 500 }}>Your Prediction Markets Oracle</div>
+            <div style={{ fontSize: mob ? 12 : 14, color: T.muted, marginTop: 10, maxWidth: 520, margin: "10px auto 0", lineHeight: 1.5 }}>Data-driven predictions across Polymarket &amp; Kalshi. Analyzing sentiment, history, and edge to find value.</div>
+
+            {/* stat ribbon */}
+            <div style={{ display: "flex", justifyContent: "center", gap: mob ? 18 : 36, marginTop: 28, flexWrap: "wrap" }}>
+              {[
+                { n: "2", l: "venues" },
+                { n: "10+", l: "live markets" },
+                { n: "5", l: "daily picks" },
+                { n: "AI", l: "+ heuristics" },
+              ].map(s => (
+                <div key={s.l} style={{ textAlign: "center" }}>
+                  <div className="stat-num">{s.n}</div>
+                  <div className="stat-lbl">{s.l}</div>
+                </div>
+              ))}
+            </div>
+
             {/* SUB FORM IN HERO */}
-            <form name="waitlist" data-netlify="true" onSubmit={handleSubscribe} style={{ marginTop: 24, padding: 20, background: T.card, borderRadius: 16, border: `1px solid ${T.border}`, maxWidth: 500, margin: "24px auto 0" }}>
+            <form name="waitlist" data-netlify="true" onSubmit={handleSubscribe} className="glass" style={{ marginTop: 28, padding: 18, borderRadius: 16, maxWidth: 520, margin: "28px auto 0" }}>
               <input type="hidden" name="form-name" value="waitlist" />
-              <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 12 }}>Join the Oracle Waitlist</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: T.text, marginBottom: 10, letterSpacing: 0.3 }}>🔮 Join the Oracle Waitlist</div>
               <div style={{ display: "flex", gap: 8 }}>
-                <input type="email" name="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" required style={{ flex: 1, background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, padding: "10px 14px", color: T.text, fontSize: 14, outline: "none" }} />
-                <button type="submit" disabled={subStatus === 'loading'} style={{ background: `linear-gradient(135deg, ${T.orange}, ${T.purple})`, border: "none", borderRadius: 10, padding: "10px 20px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: subStatus === 'loading' ? 'wait' : 'pointer' }}>
+                <input type="email" name="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required style={{ flex: 1, background: "rgba(5,6,16,0.6)", border: `1px solid ${T.border}`, borderRadius: 10, padding: "11px 14px", color: T.text, fontSize: 14, outline: "none", transition: "border-color .2s ease" }} onFocus={e => e.target.style.borderColor = T.orange} onBlur={e => e.target.style.borderColor = T.border} />
+                <button type="submit" disabled={subStatus === 'loading'} className="btn-primary" style={{ padding: "11px 22px", fontSize: 13, cursor: subStatus === 'loading' ? 'wait' : 'pointer' }}>
                   {subStatus === 'loading' ? '...' : 'Subscribe'}
                 </button>
               </div>
-              {subMsg && <div style={{ fontSize: 12, marginTop: 10, color: subStatus === 'success' ? T.green : T.red }}>{subMsg}</div>}
+              {subMsg && <div style={{ fontSize: 12, marginTop: 10, color: subStatus === 'success' ? T.green : T.red, fontWeight: 600 }}>{subMsg}</div>}
             </form>
-            
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
-              <button onClick={() => setTab("ask")} style={{ background: `linear-gradient(135deg, ${T.orange}, ${T.purple})`, border: "none", borderRadius: 12, padding: "10px 20px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>💬 Ask Swami Anything</button>
-              <button onClick={() => setTab("h2h")} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: "10px 20px", color: T.soft, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>⚔️ Compare Platforms</button>
+
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
+              <button onClick={() => setTab("ask")} className="btn-primary" style={{ fontSize: 13 }}>💬 Ask Swami Anything</button>
+              <button onClick={() => setTab("h2h")} className="card-lift" style={{ background: "rgba(17,19,28,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${T.border}`, borderRadius: 12, padding: "12px 22px", color: T.soft, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>⚔️ Compare Platforms</button>
             </div>
           </div>
 
           {/* BEST OPPS */}
-          <div style={{ marginBottom: 30 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}><span style={{ fontSize: 16 }}>⚡</span><span style={{ fontSize: 14, fontWeight: 700, color: T.yellow }}>Best Bet Opportunities</span><div style={{ flex: 1, height: 1, background: T.border, marginLeft: 8 }} /></div>
-            <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "repeat(auto-fill, minmax(240px, 1fr))", gap: 8 }}>
-              {OPPS.map((o, i) => <div key={i} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 10, padding: 12, borderLeft: `3px solid ${o.color}` }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, color: o.color, background: o.color + "14", padding: "2px 6px", borderRadius: 4 }}>{o.type}</span><span style={{ fontSize: 12, fontWeight: 800, color: o.color, fontFamily: "monospace" }}>{o.edge}</span></div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: T.text, marginBottom: 4 }}>{o.q}</div>
+          <div style={{ marginBottom: 36 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}><span style={{ fontSize: 18 }}>⚡</span><span style={{ fontSize: 15, fontWeight: 700, color: T.yellow, letterSpacing: 0.3 }}>Best Bet Opportunities</span><div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${T.border}, transparent)`, marginLeft: 8 }} /></div>
+            <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
+              {OPPS.map((o, i) => <div key={i} className="card-lift glass" style={{ borderRadius: 12, padding: 14, borderLeft: `3px solid ${o.color}`, position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: -20, right: -20, width: 70, height: 70, background: `radial-gradient(circle, ${o.color}22, transparent 70%)`, borderRadius: "50%", pointerEvents: "none" }} />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}><span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.2, color: o.color, background: o.color + "1a", padding: "3px 8px", borderRadius: 6 }}>{o.type}</span><span style={{ fontSize: 13, fontWeight: 800, color: o.color, fontFamily: "'JetBrains Mono',monospace" }}>{o.edge}</span></div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 4 }}>{o.q}</div>
                 <div style={{ fontSize: 11, color: T.muted }}>{o.desc}</div>
               </div>)}
             </div>
@@ -351,17 +377,18 @@ export default function App() {
 
           {PICKS.map(p => {
             const sc = p.side.includes("YES") ? T.green : p.side.includes("NO") ? T.red : T.yellow;
-            return (<div key={p.rank} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 14, padding: mob ? 14 : 16, marginBottom: 12, backgroundImage: `linear-gradient(135deg, ${sc}06, transparent 60%)` }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg, ${T.orange}33, ${T.purple}33)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900, color: T.gold, fontFamily: "monospace" }}>#{p.rank}</div>
-                  <div><div style={{ fontSize: 13, fontWeight: 700, color: T.text, lineHeight: 1.3 }}>{p.q}</div><div style={{ fontSize: 9, color: T.muted, marginTop: 2 }}><span style={{ color: T.yellow, fontWeight: 700 }}>{p.cat.toUpperCase()}</span> · {p.plat}</div></div>
+            return (<div key={p.rank} className="card-lift" style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: mob ? 16 : 18, marginBottom: 12, backgroundImage: `linear-gradient(135deg, ${sc}10, transparent 55%)`, position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, height: 2, width: "100%", background: `linear-gradient(90deg, ${sc}, transparent)` }} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 12, background: `linear-gradient(135deg, ${T.orange}33, ${T.purple}33)`, border: `1px solid ${T.gold}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 900, color: T.gold, fontFamily: "'JetBrains Mono',monospace", boxShadow: `0 4px 14px ${T.purple}22` }}>#{p.rank}</div>
+                  <div><div style={{ fontSize: 14, fontWeight: 700, color: T.text, lineHeight: 1.3 }}>{p.q}</div><div style={{ fontSize: 10, color: T.muted, marginTop: 3, letterSpacing: 0.3 }}><span style={{ color: T.yellow, fontWeight: 700, letterSpacing: 1 }}>{p.cat.toUpperCase()}</span> · {p.plat}</div></div>
                 </div>
-                <div style={{ textAlign: "right", flexShrink: 0 }}><div style={{ fontSize: 18, fontWeight: 800, color: sc, fontFamily: "monospace" }}>{p.side}</div><div style={{ fontSize: 10, color: T.muted }}>{p.conf}</div></div>
+                <div style={{ textAlign: "right", flexShrink: 0 }}><div style={{ fontSize: 19, fontWeight: 800, color: sc, fontFamily: "'JetBrains Mono',monospace", textShadow: `0 0 14px ${sc}55` }}>{p.side}</div><div style={{ fontSize: 10, color: T.muted, marginTop: 2 }}>{p.conf}</div></div>
               </div>
               <div style={{ marginBottom: 12 }}><PBar pct={p.prob} price={p.price} /></div>
-              <div style={{ fontSize: 12, color: T.soft, lineHeight: 1.6, marginBottom: 10 }}>{p.why}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>{p.facts.map((f, i) => <div key={i} style={{ display: "flex", gap: 6, fontSize: 11, color: T.muted }}><span style={{ color: T.gold }}>✦</span><span>{f}</span></div>)}</div>
+              <div style={{ fontSize: 12.5, color: T.soft, lineHeight: 1.65, marginBottom: 12 }}>{p.why}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingTop: 10, borderTop: `1px solid ${T.border}` }}>{p.facts.map((f, i) => <div key={i} style={{ display: "flex", gap: 8, fontSize: 11, color: T.muted, alignItems: "center" }}><span style={{ color: T.gold, fontSize: 9 }}>✦</span><span>{f}</span></div>)}</div>
             </div>);
           })}
         </div>}
@@ -375,7 +402,7 @@ export default function App() {
           <div key={sec.pl} style={{ padding: mob ? "0 0 0 16px" : 0, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, paddingRight: mob ? 16 : 0 }}><div style={{ width: 8, height: 8, borderRadius: "50%", background: sec.c }} /><span style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: sec.c }}>{sec.n}</span><span style={{ fontSize: 11, color: T.muted }}>Top 5</span><div style={{ flex: 1, height: 1, background: T.border, marginLeft: 8 }} /></div>
             <div style={mob ? { display: "flex", gap: 10, overflowX: "auto", paddingRight: 16, paddingBottom: 8 } : { display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 10 }}>
-              {sec.d.map((m, i) => <div key={m.id} onClick={() => { setSel(m); setSelP(sec.pl); }} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: mob ? 14 : 12, padding: mob ? 14 : "12px 14px", cursor: "pointer", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: mob ? 120 : 135, minWidth: mob ? 220 : "auto", maxWidth: mob ? 240 : "none", flexShrink: 0 }}>
+              {sec.d.map((m, i) => <div key={m.id} className="card-lift" onClick={() => { setSel(m); setSelP(sec.pl); }} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: mob ? 14 : 14, padding: mob ? 14 : "14px 16px", cursor: "pointer", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: mob ? 120 : 140, minWidth: mob ? 220 : "auto", maxWidth: mob ? 240 : "none", flexShrink: 0, overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: 0, right: 0, width: 24, height: 24, background: sec.c + "14", borderRadius: "0 12px 0 8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: sec.c, fontFamily: "monospace" }}>{i + 1}</div>
                 <div><div style={{ marginBottom: 6 }}><Price v={m.yes} /></div><div style={{ fontSize: 10, color: sec.c, fontWeight: 600, marginBottom: 3 }}>{m.label}</div><div style={{ fontSize: mob ? 12 : 11.5, fontWeight: 600, color: T.text, lineHeight: 1.4, paddingRight: 14, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{m.q}</div></div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: T.muted, marginTop: 8 }}><span>{m.vol}</span><span>24h {m.v24}</span></div>
@@ -397,17 +424,17 @@ export default function App() {
           </div>}
           {H2H.map((pair, i) => {
             const pY = pair.poly.yes, kY = pair.kalshi.yes, diff = Math.abs(pY - kY) * 100;
-            return (<div key={i} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: mob ? 14 : 12, padding: mob ? 14 : 16, marginBottom: 10 }}>
+            return (<div key={i} className="card-lift" style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: mob ? 14 : 14, padding: mob ? 14 : 18, marginBottom: 12 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 6 }}>
                 <span style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: T.text }}>{pair.topic}</span>
                 {diff >= 2 && <span style={{ fontSize: 11, fontWeight: 700, color: T.yellow, background: T.yellow + "10", padding: "3px 10px", borderRadius: 6 }}>⚡ {diff.toFixed(0)}¢</span>}
               </div>
               {mob ? <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
                 {[{ pl: "poly", y: pY, l: pair.poly.label, v: pair.poly.vol }, { pl: "kalshi", y: kY, l: pair.kalshi.label, v: pair.kalshi.vol }].map(s => <div key={s.pl} style={{ background: T.sf, borderRadius: 10, padding: 10, border: `1px solid ${(s.pl === "poly" ? T.green : T.blue) + "12"}` }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><Bdg p={s.pl} /><Price v={s.y} s="sm" /></div><div style={{ fontSize: 11, color: T.soft }}>{s.l} · {s.v}</div></div>)}
-              </div> : <div style={{ display: "grid", gridTemplateColumns: "1fr 40px 1fr", gap: 10, alignItems: "center", marginBottom: 10 }}>
-                <div style={{ background: T.sf, borderRadius: 10, padding: 12, border: `1px solid ${T.green}12` }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><Bdg p="poly" /><Price v={pY} s="sm" /></div><div style={{ fontSize: 11, color: T.soft }}>{pair.poly.label} · {pair.poly.vol}</div></div>
-                <div style={{ textAlign: "center", fontSize: 10, fontWeight: 800, color: T.dim }}>VS</div>
-                <div style={{ background: T.sf, borderRadius: 10, padding: 12, border: `1px solid ${T.blue}12` }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><Bdg p="kalshi" /><Price v={kY} s="sm" /></div><div style={{ fontSize: 11, color: T.soft }}>{pair.kalshi.label} · {pair.kalshi.vol}</div></div>
+              </div> : <div style={{ display: "grid", gridTemplateColumns: "1fr 48px 1fr", gap: 12, alignItems: "center", marginBottom: 12 }}>
+                <div style={{ background: T.sf, borderRadius: 12, padding: 14, border: `1px solid ${T.green}22`, boxShadow: `inset 0 0 0 1px ${T.green}06` }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><Bdg p="poly" /><Price v={pY} s="sm" /></div><div style={{ fontSize: 11.5, color: T.soft }}>{pair.poly.label} · {pair.poly.vol}</div></div>
+                <div style={{ textAlign: "center", fontSize: 11, fontWeight: 900, color: T.muted, letterSpacing: 1.5, padding: "8px 0", background: `radial-gradient(circle, ${T.orange}18, transparent 70%)`, borderRadius: "50%" }}>VS</div>
+                <div style={{ background: T.sf, borderRadius: 12, padding: 14, border: `1px solid ${T.blue}22`, boxShadow: `inset 0 0 0 1px ${T.blue}06` }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><Bdg p="kalshi" /><Price v={kY} s="sm" /></div><div style={{ fontSize: 11.5, color: T.soft }}>{pair.kalshi.label} · {pair.kalshi.vol}</div></div>
               </div>}
               <button onClick={() => runSwami(pair)} disabled={sl} style={{ background: `linear-gradient(135deg, ${T.orange}18, ${T.purple}18)`, border: `1px solid ${T.orange}44`, borderRadius: mob ? 10 : 8, padding: mob ? "10px" : "7px 16px", color: T.orange, fontSize: mob ? 12 : 11, fontWeight: 700, cursor: sl ? "wait" : "pointer", width: mob ? "100%" : "auto", float: mob ? "none" : "right", display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
                 <SwamiMini size={16} />{sl && sp?.topic === pair.topic ? "Thinking…" : "Swami's Analysis"}
@@ -483,7 +510,34 @@ export default function App() {
         </div>
       </>}
 
-      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}input::placeholder{color:${T.dim}}::-webkit-scrollbar{width:5px;height:0}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:${T.border};border-radius:3px}*{-webkit-tap-highlight-color:transparent}`}</style>
+      <style>{`
+        @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+        @keyframes float-y{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+        @keyframes aurora-a{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(140px,90px) scale(1.12)}}
+        @keyframes aurora-b{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-100px,-70px) scale(0.92)}}
+        @keyframes aurora-c{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(80px,-90px) scale(1.08)}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pulse-soft{0%,100%{opacity:0.95}50%{opacity:0.55}}
+        .aurora{position:fixed;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+        .aurora::before,.aurora::after{content:'';position:absolute;border-radius:50%;filter:blur(100px);opacity:0.28;will-change:transform}
+        .aurora::before{width:620px;height:620px;background:radial-gradient(circle,${T.purple} 0%,transparent 70%);top:-220px;left:-160px;animation:aurora-a 24s ease-in-out infinite}
+        .aurora::after{width:720px;height:720px;background:radial-gradient(circle,${T.orange} 0%,transparent 70%);top:280px;right:-240px;animation:aurora-b 30s ease-in-out infinite}
+        .float{animation:float-y 5.5s ease-in-out infinite;will-change:transform}
+        .fade-up{animation:fadeUp 0.7s cubic-bezier(.2,.7,.2,1) both}
+        .glass{background:rgba(16,19,30,0.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.06)}
+        .card-lift{transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease}
+        .card-lift:hover{transform:translateY(-2px);border-color:rgba(255,151,77,0.32);box-shadow:0 12px 32px rgba(124,58,237,0.18)}
+        .btn-primary{background:linear-gradient(135deg,${T.orange},${T.purple});border:none;border-radius:12px;padding:12px 24px;color:#fff;font-weight:700;cursor:pointer;transition:transform .2s ease, box-shadow .2s ease;box-shadow:0 4px 18px rgba(166,109,255,0.28)}
+        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 30px rgba(166,109,255,0.45)}
+        .btn-primary:active{transform:translateY(0)}
+        .stat-num{font-size:26px;font-weight:800;font-family:'JetBrains Mono',monospace;color:${T.text};letter-spacing:-0.5px;line-height:1}
+        .stat-lbl{font-size:10px;color:${T.muted};text-transform:uppercase;letter-spacing:1.3px;margin-top:6px;font-weight:600}
+        input::placeholder{color:${T.dim}}
+        ::-webkit-scrollbar{width:5px;height:0}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:${T.border};border-radius:3px}
+        *{-webkit-tap-highlight-color:transparent}
+      `}</style>
     </div>
   );
 }
