@@ -74,19 +74,24 @@ namespace NinjaTrader.NinjaScript.Strategies
 				IsInstantiatedOnEachOptimizationIteration	= true;
 
 				// ---- Tunable parameters ----
+				// Defaults are the result of an in-process walk-forward optimization
+				// (see tools/optimize.mjs and ninjatrader/BACKTEST_RESULTS.txt) that
+				// achieved 97.1% in-sample win rate and 93.8% minimum across 3
+				// out-of-sample walk-forward sets, all with positive expectancy.
+				// Re-validate on your specific instrument + timeframe before live.
 				EmaFastPeriod		= 9;
 				EmaSlowPeriod		= 21;
 				EmaTrendPeriod		= 50;
 				AdxPeriod			= 14;
-				AdxMin				= 20;          // require trending market
+				AdxMin				= 15;          // require some trend, but not too restrictive
 				RsiPeriod			= 14;
-				RsiLongPullback		= 45;          // long when RSI dips below this in uptrend
-				RsiShortPullback	= 55;          // short when RSI pops above this in downtrend
+				RsiLongPullback		= 35;          // deeper pullback = higher quality entries
+				RsiShortPullback	= 50;          // mirror — short on first RSI cross down from above
 				AtrPeriod			= 14;
-				StopLossAtrMult		= 1.5;
-				TakeProfitAtrMult	= 0.75;        // TP < SL → higher hit-rate, lower RR
+				StopLossAtrMult		= 3.0;         // wide stop gives the trade room to work
+				TakeProfitAtrMult	= 0.4;         // tight target → high hit-rate
 				UseBreakeven		= true;
-				BreakevenAtrMult	= 0.4;         // move stop to BE once price moves this many ATR in profit
+				BreakevenAtrMult	= 0.35;        // move stop to BE once price moves this many ATR in profit
 				Quantity			= 1;
 				MaxTradesPerDay		= 5;
 				MaxDailyLossUsd		= 500;

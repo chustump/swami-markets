@@ -1,0 +1,114 @@
+Grid size: 3456 configurations
+Training set: 40000 bars
+Walk-forward sets: 3 × 20000 bars
+
+Scanned 3456; 792 candidates meet train criteria (≥80% WR, +EV, ≥30 trades).
+
+========================================================================
+CHOSEN CONFIGURATION
+========================================================================
+  TakeProfit × ATR     : 0.4
+  StopLoss × ATR       : 3
+  ADX min              : 15
+  RSI long pullback    : 35
+  RSI short pullback   : 50
+  Breakeven × ATR      : 0.35
+  Use breakeven        : true
+
+IN-SAMPLE (train, 40k bars):
+  Trades   : 174
+  Win rate : 97.1%
+  Expectancy/trade : 1.12
+  Total PnL: 194.95
+  Profit factor: 5.15
+  Max drawdown: 14.49
+
+WALK-FORWARD (out-of-sample):
+  Seed 101: 81 trades, WR 93.8%, exp 0.89, PnL 72.10
+  Seed 202: 73 trades, WR 94.5%, exp 0.73, PnL 53.01
+  Seed 303: 96 trades, WR 93.8%, exp 0.72, PnL 69.48
+
+  → Min out-of-sample WR: 93.8%
+  → Avg out-of-sample WR: 94.0%
+
+✅ TARGET MET — config achieves ≥80% WR with positive expectancy on train + all walk-forward sets.
+
+--- JSON ---
+{
+  "params": {
+    "emaFast": 9,
+    "emaSlow": 21,
+    "emaTrend": 50,
+    "adxPeriod": 14,
+    "rsiPeriod": 14,
+    "atrPeriod": 14,
+    "useBreakeven": true,
+    "qty": 1,
+    "startCapital": 10000,
+    "tpAtr": 0.4,
+    "slAtr": 3,
+    "adxMin": 15,
+    "rsiLongPullback": 35,
+    "rsiShortPullback": 50,
+    "beTrigger": 0.35
+  },
+  "train": {
+    "trades": 174,
+    "wins": 169,
+    "losses": 5,
+    "winRate": 0.9712643678160919,
+    "totalPnL": 194.9484583214462,
+    "expectancy": 1.120393438629001,
+    "avgWin": 1.4318106879259418,
+    "avgLoss": -9.405509587607593,
+    "profitFactor": 5.145409804872331,
+    "maxDD": 14.488402857830806,
+    "finalEquity": 10194.948458321454
+  },
+  "tests": [
+    {
+      "seed": 101,
+      "trades": 81,
+      "wins": 76,
+      "losses": 5,
+      "winRate": 0.9382716049382716,
+      "totalPnL": 72.09513158790924,
+      "expectancy": 0.8900633529371511,
+      "avgWin": 1.5839546436862675,
+      "avgLoss": -9.65708426644942,
+      "profitFactor": 2.4931034999535355,
+      "maxDD": 15.027051072403992,
+      "finalEquity": 10072.095131587912
+    },
+    {
+      "seed": 202,
+      "trades": 73,
+      "wins": 69,
+      "losses": 4,
+      "winRate": 0.9452054794520548,
+      "totalPnL": 53.01486118604771,
+      "expectancy": 0.7262309751513385,
+      "avgWin": 1.44852704814714,
+      "avgLoss": -11.733376284026235,
+      "profitFactor": 2.129573873340743,
+      "maxDD": 29.15246267427574,
+      "finalEquity": 10053.014861186039
+    },
+    {
+      "seed": 303,
+      "trades": 96,
+      "wins": 90,
+      "losses": 6,
+      "winRate": 0.9375,
+      "totalPnL": 69.47767826147538,
+      "expectancy": 0.7237258152237018,
+      "avgWin": 1.4454889099360217,
+      "avgLoss": -10.102720605461096,
+      "profitFactor": 2.1461875959748693,
+      "maxDD": 20.731801959358563,
+      "finalEquity": 10069.477678261483
+    }
+  ],
+  "target": 0.8,
+  "passed": true
+}

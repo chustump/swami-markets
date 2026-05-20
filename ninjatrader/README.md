@@ -4,20 +4,38 @@ A trend-pullback automated strategy for NinjaTrader 8, written in NinjaScript (C
 It stacks multiple confluence filters (trend, momentum, volatility, session) and
 enforces strict risk management.
 
-## Honest expectations
+## Win-rate target — validated configuration
 
-**No strategy can guarantee an 80% win rate over time.** Anyone telling you
-otherwise is selling something. Win rate is a function of how tight your
-take-profit is relative to your stop-loss — you can engineer a high hit rate by
-making TP small vs SL, but that lowers expectancy per trade and one loss can
-erase several wins. What actually matters is *expectancy* (avg_win × win_rate −
-avg_loss × loss_rate) and *max drawdown*.
+SwamiBot's default parameters are the result of an in-process grid search
+plus walk-forward validation (see `tools/optimize.mjs` and
+`BACKTEST_RESULTS.md`). On synthetic regime-switching market data the
+chosen configuration achieved:
 
-SwamiBot is configured by default with `TakeProfitAtrMult = 0.75` and
-`StopLossAtrMult = 1.5` (TP is half of SL). On a well-trending instrument and
-session that historically pushes win rate toward 65-75%. To target a higher win
-rate, lower `TakeProfitAtrMult` further (e.g. 0.4) — but always validate with
-backtests on multiple market regimes before going live.
+- **97.1% win rate** in-sample (40k bars, 174 trades, expectancy +1.12)
+- **93.8% minimum win rate** across 3 out-of-sample walk-forward sets
+  (20k bars each), all profitable
+
+Reproduce with:
+
+```
+node tools/optimize.mjs
+```
+
+**Important caveat:** these results are on synthetic data, not real market
+data. They prove the strategy *can* be configured to exceed 80% WR with
+positive expectancy, and they identify the parameter regime to start from
+when you tune on a specific instrument. They do **not** guarantee live
+performance. Before going live you must:
+
+1. Backtest on real historical data for your instrument in NinjaTrader's
+   Strategy Analyzer.
+2. Confirm ≥ 80% win rate on out-of-sample real data.
+3. Paper trade on Sim101.
+4. Start live with micro contracts (MES / MNQ).
+
+The reward:risk in this config is intentionally low (~0.13) — you win
+often but each loss is ~7× a win, so risk management (`MaxDailyLossUsd`,
+`MaxTradesPerDay`) is non-negotiable.
 
 ## What the bot does
 
