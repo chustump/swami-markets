@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "worker:bridge": "node src/worker/bridge.mjs"
   },
   "dependencies": {
     "next": "14.2.3",
@@ -14,7 +15,8 @@
     "react-dom": "^18.3.1",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
-    "lucide-react": "^0.378.0"
+    "lucide-react": "^0.378.0",
+    "nats": "^2.29.2"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",
