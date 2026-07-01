@@ -10,7 +10,7 @@ export async function POST(request) {
     }
 
     if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json({ raw: '{"side":"???","confidence":"—","reasoning":"Missing API Key. Please add ANTHROPIC_API_KEY to your environment variables!","analysis":"⚠️ The Oracle is unable to connect to the mystical plane because the Anthropic API Key is missing. Please add it to your .env.local file or Netlify dashboard."}' }, { status: 200 });
+      return NextResponse.json({ raw: '{"side":"???","confidence":"—","reasoning":"Missing API Key. Please add ANTHROPIC_API_KEY to your environment variables!","analysis":"⚠️ The Oracle is unable to connect to the mystical plane because the Anthropic API Key is missing. Please add it to your .env.local file or Vercel dashboard."}' }, { status: 200 });
     }
 
     const prompt = `You are "The Swami." Analyze (Mar 2026): ${pair.topic} (${pair.cat})
