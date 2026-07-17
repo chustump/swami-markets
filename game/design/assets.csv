@@ -1,0 +1,10 @@
+id,role,type,description,size/ratio,style line ref,source
+floor_metal,texture mapped on arena floor (REPEAT),texture,dark slate-blue brushed metal floor with hex panel seams and cyan neon grid,1024x1024 1:1,STYLE FORMULA,generate
+wall_panel,texture mapped on arena walls (REPEAT),texture,slate-blue riveted metal wall panel with cyan neon trim strips,1024x1024 1:1,STYLE FORMULA,generate
+crate_panel,texture mapped on cover crates (REPEAT),texture,dark armored metal crate panel with magenta neon edge trim,1024x1024 1:1,STYLE FORMULA,generate
+skybox,texture on surrounding sky box,background,nocturnal sky over distant neon skyline with cyan/magenta horizon glow,1280x720 16:9,STYLE FORMULA,generate
+cover,deploy thumbnail / OG card,image,key art of neon low-poly arena shooter with title NEON ARENA,16:9,STYLE FORMULA,generate
+favicon,deploy favicon / catalog icon,image,bold neon arena emblem icon,1:1,STYLE FORMULA,generate
+sfx_shoot,blaster fire sound on shot,audio,short punchy sci-fi energy blaster shot,~1s,STYLE TOKEN,generate
+sfx_hit,impact sound when a shot lands,audio,short metallic electric hit impact,~1s,STYLE TOKEN,generate
+music_ambient,looping arena background music,audio,dark driving synthwave arena combat loop,~30s,STYLE TOKEN,generate
