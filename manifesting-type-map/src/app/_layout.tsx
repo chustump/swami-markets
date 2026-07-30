@@ -35,6 +35,9 @@ export default function RootLayout() {
         <Stack.Screen name="result" options={{ gestureEnabled: false }} />
         <Stack.Screen name="onboarding/setup" options={{ gestureEnabled: false }} />
         <Stack.Screen name="home" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="history" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="opposite" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
       </Stack>
     </>
   );

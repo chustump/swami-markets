@@ -1,5 +1,5 @@
-import { Redirect } from 'expo-router';
-import { Text, View } from 'react-native';
+import { Redirect, useRouter } from 'expo-router';
+import { Pressable, Text, View } from 'react-native';
 
 import { ArchitectHome } from '@/components/home/ArchitectHome';
 import { BeaconHome } from '@/components/home/BeaconHome';
@@ -11,6 +11,7 @@ import { TYPE_CONTENT } from '@/lib/typeContent';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const profile = useAppStore((s) => s.profile);
   const commitment = useAppStore((s) => s.commitment);
 
@@ -49,6 +50,17 @@ export default function HomeScreen() {
           <Text className="text-base font-semibold text-paper">
             {content.name}
           </Text>
+        </View>
+        <View className="flex-row gap-4">
+          <Pressable onPress={() => router.push('/opposite')} className="py-1">
+            <Text className="text-sm font-medium text-fog">Opposite</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/history')} className="py-1">
+            <Text className="text-sm font-medium text-fog">History</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/settings')} className="py-1">
+            <Text className="text-sm font-medium text-fog">Settings</Text>
+          </Pressable>
         </View>
       </View>
       {engine}
