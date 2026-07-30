@@ -1,5 +1,13 @@
 import type { PropsWithChildren, ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+  type TextInputProps,
+  type ViewStyle,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export function Screen({
@@ -81,5 +89,45 @@ export function SectionLabel({ children }: { children: ReactNode }) {
     <Text className="mb-2 text-xs font-semibold uppercase tracking-widest text-fog">
       {children}
     </Text>
+  );
+}
+
+export function TextField(props: TextInputProps) {
+  return (
+    <TextInput
+      placeholderTextColor="#5c6472"
+      {...props}
+      className={`rounded-2xl border border-line bg-card px-4 py-4 text-base text-paper ${
+        props.multiline ? 'min-h-[96px]' : ''
+      } ${props.className ?? ''}`}
+    />
+  );
+}
+
+export function Chip({
+  label,
+  selected,
+  onPress,
+  tint,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  tint?: string;
+}) {
+  const style: ViewStyle | undefined =
+    selected && tint ? { backgroundColor: tint, borderColor: tint } : undefined;
+  return (
+    <Pressable
+      onPress={onPress}
+      style={style}
+      className={`rounded-full border px-4 py-2.5 ${
+        selected ? 'border-paper bg-paper' : 'border-line bg-card'
+      }`}>
+      <Text
+        className={`text-sm font-medium ${selected ? 'text-ink' : 'text-fog'}`}>
+        {label}
+      </Text>
+    </Pressable>
   );
 }
