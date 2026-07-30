@@ -4,3 +4,10 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Manifesting Type Map web prototype (manifesting-type-map/, exported with
+# baseUrl /app). SPA fallback for client-side routes; real files still win.
+[[redirects]]
+  from = "/app/*"
+  to = "/app/index.html"
+  status = 200

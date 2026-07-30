@@ -38,28 +38,26 @@ export default function ResultScreen() {
   return (
     <Screen scroll>
       <View className="items-center pt-10">
-        <Animated.Text
-          entering={ZoomIn.duration(600)}
-          style={{ color: content.hex }}
-          className="text-6xl">
-          {content.emblem}
-        </Animated.Text>
-        <Animated.Text
+        <Animated.View entering={ZoomIn.duration(600)}>
+          <Text style={{ color: content.hex }} className="text-6xl">
+            {content.emblem}
+          </Text>
+        </Animated.View>
+        <Animated.View
           entering={FadeInDown.delay(250).duration(500)}
-          className="mt-4 text-xs font-semibold uppercase tracking-widest text-fog">
-          Your manifesting type
-        </Animated.Text>
-        <Animated.Text
-          entering={FadeInDown.delay(400).duration(500)}
-          style={{ color: content.hex }}
-          className="mt-1 text-4xl font-bold">
-          {content.name}
-        </Animated.Text>
-        <Animated.Text
-          entering={FadeIn.delay(600).duration(500)}
-          className="mt-2 text-base font-medium text-paper">
-          {content.tagline}
-        </Animated.Text>
+          className="items-center">
+          <Text className="mt-4 text-xs font-semibold uppercase tracking-widest text-fog">
+            Your manifesting type
+          </Text>
+          <Text
+            style={{ color: content.hex }}
+            className="mt-1 text-4xl font-bold">
+            {content.name}
+          </Text>
+          <Text className="mt-2 text-base font-medium text-paper">
+            {content.tagline}
+          </Text>
+        </Animated.View>
       </View>
 
       <Animated.View entering={FadeIn.delay(800).duration(500)} className="mt-8">

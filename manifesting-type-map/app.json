@@ -36,7 +36,8 @@
     ],
     "experiments": {
       "typedRoutes": false,
-      "reactCompiler": false
+      "reactCompiler": false,
+      "baseUrl": "/app"
     }
   }
 }
