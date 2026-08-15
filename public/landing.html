@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swami Markets</title>
+<meta name="description" content="Swami scores every open prediction market against its own forecast and shows you the gap, in cents, before the crowd closes it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,500..700,0..100,0..1&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   SWAMI MARKETS — tokens
+   ============================================================ */
+:root{
+  /* ground + ink */
+  --ink:#101619;
+  --ink-soft:#1B2427;
+  --linen:#F3F1EC;
+  --surface:#FFFFFF;
+  --line:#E1DDD4;
+  --muted:#5E6A6B;
+
+  /* single accent */
+  --accent:#A85B18;        /* solid fills, links on linen */
+  --accent-ink:#8F4E14;    /* accent text on linen */
+  --accent-glow:#E9A13C;   /* accent on ink */
+
+  /* atmosphere only — never UI */
+  --teal:#1C4B4A;
+  --plum:#3E2846;
+
+  /* semantic */
+  --up:#2C6E4E;
+
+  /* type on ink */
+  --on-ink:#F6F4F0;
+  --on-ink-muted:#A6B0AF;
+
+  /* spacing scale */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px;
+  --s6:32px; --s7:48px; --s8:64px; --s9:96px; --s10:128px;
+
+  --section-y:clamp(72px, 10vw, 128px);
+  --gutter:clamp(20px, 5vw, 40px);
+  --maxw:1160px;
+  --nav-h:66px;
+
+  --radius:14px;
+  --radius-lg:20px;
+
+  --display:"Fraunces", Georgia, "Times New Roman", serif;
+  --body:"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{
+  -webkit-text-size-adjust:100%;
+  scroll-behavior:smooth;
+  scroll-padding-top:calc(var(--nav-h) + 12px);
+  background:var(--linen);
+}
+body{
+  margin:0;
+  background:var(--linen);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+img,svg{display:block;max-width:100%}
+h1,h2,h3,h4{margin:0;font-family:var(--display);font-weight:600;line-height:1.04;letter-spacing:-0.02em;text-wrap:balance}
+p{margin:0}
+a{color:inherit}
+ul{margin:0;padding:0;list-style:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+
+/* ============================================================
+   type scale
+   ============================================================ */
+.h1{font-size:clamp(2.85rem, 5.6vw, 4.25rem);font-weight:600;font-variation-settings:"SOFT" 0,"WONK" 1,"opsz" 120}
+.h2{font-size:clamp(2.05rem, 4.4vw, 3.15rem)}
+.h3{font-size:clamp(1.25rem, 2vw, 1.45rem);letter-spacing:-0.015em}
+.lede{font-size:clamp(1.05rem, 1.6vw, 1.2rem);line-height:1.62;color:var(--muted);max-width:56ch}
+.eyebrow{
+  font-family:var(--body);font-size:.7rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.17em;color:var(--accent-ink);
+  display:flex;align-items:center;gap:var(--s3);
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--line);max-width:120px}
+.eyebrow--onink{color:var(--accent-glow)}
+.eyebrow--onink::after{background:rgba(246,244,240,.18)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   layout
+   ============================================================ */
+.wrap{width:100%;max-width:var(--maxw);margin:0 auto;padding-inline:var(--gutter)}
+.section{padding-block:var(--section-y)}
+.section + .section{border-top:1px solid var(--line)}
+.section-head{display:flex;flex-direction:column;gap:var(--s4);max-width:46ch;margin-bottom:var(--s8)}
+
+/* ============================================================
+   buttons
+   ============================================================ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);
+  font-family:var(--body);font-size:.94rem;font-weight:600;letter-spacing:.005em;
+  padding:13px 22px;border-radius:100px;border:1px solid transparent;
+  text-decoration:none;cursor:pointer;white-space:nowrap;
+  transition:transform .22s cubic-bezier(.2,.7,.3,1), box-shadow .22s ease, background-color .2s ease, color .2s ease;
+}
+.btn-primary{background:var(--accent);color:#FFF;box-shadow:0 1px 2px rgba(16,22,25,.16)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 22px -10px rgba(168,91,24,.72)}
+.btn-primary:active{transform:translateY(0)}
+.btn-ghost{background:transparent;color:var(--on-ink);border-color:rgba(246,244,240,.28)}
+.btn-ghost:hover{transform:translateY(-2px);background:rgba(246,244,240,.08)}
+.btn-sm{padding:9px 17px;font-size:.85rem}
+.btn svg{width:15px;height:15px}
+
+/* ============================================================
+   sticky nav
+   ============================================================ */
+.nav{
+  position:sticky;top:0;z-index:60;height:var(--nav-h);
+  background:rgba(243,241,236,.82);
+  border-bottom:1px solid transparent;
+  transition:border-color .3s ease, background-color .3s ease;
+}
+@supports (backdrop-filter:blur(12px)){
+  .nav{backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4)}
+}
+.nav.is-stuck{border-bottom-color:var(--line);background:rgba(243,241,236,.94)}
+.nav-inner{height:100%;display:flex;align-items:center;justify-content:space-between;gap:var(--s5)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--display);font-weight:600;font-size:1.16rem;letter-spacing:-.02em}
+.brand .mark{width:26px;height:26px;flex:none}
+.nav-links{display:none;align-items:center;gap:var(--s6);margin-left:auto;margin-right:var(--s5)}
+.nav-links a{
+  text-decoration:none;font-size:.9rem;font-weight:500;color:var(--muted);
+  padding-block:6px;position:relative;transition:color .2s ease;
+}
+.nav-links a::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:1.5px;
+  background:var(--accent);transform:scaleX(0);transform-origin:left;
+  transition:transform .28s cubic-bezier(.2,.7,.3,1);
+}
+.nav-links a:hover{color:var(--ink)}
+.nav-links a:hover::after{transform:scaleX(1)}
+@media (min-width:800px){ .nav-links{display:flex} }
+
+/* ============================================================
+   hero — mesh gradient on ink
+   ============================================================ */
+.hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  background:var(--ink);color:var(--on-ink);
+  padding-block:clamp(84px, 12vw, 148px) clamp(84px, 11vw, 140px);
+}
+.hero::after{ /* grain-free vignette for depth */
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(125% 95% at 50% 5%, transparent 52%, rgba(8,12,14,.62) 100%);
+}
+.mesh{position:absolute;inset:-25% -15%;z-index:-2;pointer-events:none}
+.blob{
+  position:absolute;border-radius:50%;
+  will-change:transform;
+  animation:drift 26s ease-in-out infinite alternate;
+}
+.blob-1{
+  width:min(70vw,720px);aspect-ratio:1;top:-6%;left:-6%;
+  background:radial-gradient(circle at 50% 50%, rgba(233,161,60,.58) 0%, rgba(233,161,60,.20) 42%, transparent 68%);
+}
+.blob-2{
+  width:min(78vw,820px);aspect-ratio:1;top:14%;right:-16%;
+  background:radial-gradient(circle at 50% 50%, rgba(28,75,74,.85) 0%, rgba(28,75,74,.34) 44%, transparent 70%);
+  animation-duration:34s;animation-delay:-8s;
+}
+.blob-3{
+  width:min(64vw,660px);aspect-ratio:1;bottom:-22%;left:22%;
+  background:radial-gradient(circle at 50% 50%, rgba(62,40,70,.9) 0%, rgba(62,40,70,.36) 46%, transparent 72%);
+  animation-duration:30s;animation-delay:-16s;
+}
+.blob-4{
+  width:min(46vw,460px);aspect-ratio:1;top:34%;left:52%;
+  background:radial-gradient(circle at 50% 50%, rgba(168,91,24,.44) 0%, transparent 66%);
+  animation-duration:38s;animation-delay:-4s;
+}
+@keyframes drift{
+  0%  {transform:translate3d(0,0,0) scale(1)}
+  50% {transform:translate3d(4%,-5%,0) scale(1.1)}
+  100%{transform:translate3d(-5%,4%,0) scale(.96)}
+}
+
+.hero-grid{display:grid;gap:clamp(40px,6vw,72px);align-items:center}
+@media (min-width:960px){ .hero-grid{grid-template-columns:1.08fr .92fr} }
+.hero-copy{display:flex;flex-direction:column;gap:var(--s5);max-width:660px}
+.hero h1{color:var(--on-ink)}
+.hero .lede{color:var(--on-ink-muted);max-width:50ch}
+.hero-cta{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s4);margin-top:var(--s2)}
+.hero-note{
+  display:flex;align-items:flex-start;gap:var(--s3);
+  font-size:.85rem;line-height:1.5;color:var(--on-ink-muted);margin-top:var(--s2);max-width:44ch;
+}
+.hero-note svg{width:16px;height:16px;color:var(--accent-glow);flex:none;margin-top:3px}
+
+/* frosted glass readout card */
+.glass{
+  position:relative;border-radius:var(--radius-lg);
+  background:rgba(246,244,240,.09);
+  border:1px solid rgba(246,244,240,.18);
+  box-shadow:0 24px 60px -24px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.14);
+  padding:clamp(20px,3vw,28px);
+  display:flex;flex-direction:column;gap:var(--s5);
+}
+@supports (backdrop-filter:blur(10px)){
+  .glass{backdrop-filter:blur(16px) saturate(1.25);-webkit-backdrop-filter:blur(16px) saturate(1.25)}
+}
+.glass-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s4);
+  padding-bottom:var(--s4);border-bottom:1px solid rgba(246,244,240,.14)}
+.glass-title{font-family:var(--body);font-size:.78rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--on-ink-muted)}
+.glass-stamp{font-size:.78rem;color:var(--on-ink-muted);font-variant-numeric:tabular-nums}
+.row{display:flex;flex-direction:column;gap:9px}
+.row-top{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s4)}
+.row-name{font-size:.95rem;font-weight:500;color:var(--on-ink);line-height:1.35}
+.row-edge{font-size:.8rem;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.row-edge.up{color:#7ED8A6}
+.row-edge.down{color:#E8917F}
+.bar{position:relative;height:6px;border-radius:99px;background:rgba(246,244,240,.14);overflow:hidden}
+.bar span{position:absolute;inset:0 auto 0 0;border-radius:99px;background:linear-gradient(90deg,var(--accent-glow),#F0C079)}
+.tick{position:absolute;top:-3px;width:2px;height:12px;border-radius:2px;background:rgba(246,244,240,.85)}
+.row-legend{display:flex;justify-content:space-between;font-size:.74rem;color:var(--on-ink-muted);font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   steps
+   ============================================================ */
+.steps{display:grid;gap:var(--s6)}
+@media (min-width:760px){ .steps{grid-template-columns:repeat(3,1fr);gap:var(--s7)} }
+.step{display:flex;flex-direction:column;gap:var(--s4);padding-top:var(--s5);border-top:2px solid var(--ink)}
+.step:nth-child(2),.step:nth-child(3){border-top-color:var(--line)}
+.step-head{display:flex;align-items:center;gap:11px}
+.step-n{
+  font-family:var(--body);font-size:.72rem;font-weight:600;letter-spacing:.16em;
+  color:var(--accent-ink);font-variant-numeric:tabular-nums;
+}
+.step-icon{width:20px;height:20px;color:var(--muted);stroke-width:1.6;margin-left:auto}
+.step p{color:var(--muted);font-size:1rem}
+
+/* ============================================================
+   pricing
+   ============================================================ */
+.tiers{display:grid;gap:var(--s5);align-items:start}
+@media (min-width:900px){ .tiers{grid-template-columns:repeat(3,1fr);gap:var(--s5)} }
+.tier{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);
+  padding:clamp(24px,3vw,32px);display:flex;flex-direction:column;gap:var(--s5);
+  transition:transform .26s cubic-bezier(.2,.7,.3,1), box-shadow .26s ease;
+}
+.tier:hover{transform:translateY(-4px);box-shadow:0 20px 44px -28px rgba(16,22,25,.4)}
+.tier-feat{
+  background:var(--ink);border-color:var(--ink);color:var(--on-ink);
+  box-shadow:0 26px 56px -30px rgba(16,22,25,.85);
+}
+@media (min-width:900px){ .tier-feat{transform:translateY(-14px)} .tier-feat:hover{transform:translateY(-19px)} }
+.tier-badge{
+  align-self:flex-start;font-size:.68rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  padding:5px 11px;border-radius:99px;background:var(--accent-glow);color:#20140A;
+}
+.tier-name{font-family:var(--display);font-size:1.5rem;font-weight:600}
+.tier-blurb{font-size:.9rem;color:var(--muted)}
+.tier-feat .tier-blurb{color:var(--on-ink-muted)}
+.price{display:flex;align-items:baseline;gap:6px;font-variant-numeric:tabular-nums}
+.price b{font-family:var(--display);font-size:3rem;font-weight:600;line-height:1;letter-spacing:-.03em}
+.price span{font-size:.88rem;color:var(--muted)}
+.tier-feat .price span{color:var(--on-ink-muted)}
+.tier hr{border:0;border-top:1px solid var(--line);margin:0}
+.tier-feat hr{border-top-color:rgba(246,244,240,.16)}
+.feats{display:flex;flex-direction:column;gap:var(--s3);font-size:.93rem}
+.feats li{display:flex;gap:10px;align-items:flex-start;color:var(--muted)}
+.tier-feat .feats li{color:var(--on-ink-muted)}
+.feats svg{width:16px;height:16px;flex:none;margin-top:4px;color:var(--accent-ink)}
+.tier-feat .feats svg{color:var(--accent-glow)}
+.tier .btn{width:100%;margin-top:auto}
+.tier-note{font-size:.78rem;color:var(--muted);text-align:center}
+.tier-feat .tier-note{color:var(--on-ink-muted)}
+
+/* ============================================================
+   testimonials
+   ============================================================ */
+.quotes{display:grid;gap:var(--s5)}
+@media (min-width:820px){ .quotes{grid-template-columns:repeat(3,1fr)} }
+.quote{
+  display:flex;flex-direction:column;gap:var(--s4);
+  padding:28px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--radius);
+  transition:transform .26s cubic-bezier(.2,.7,.3,1), box-shadow .26s ease;
+}
+.quote:hover{transform:translateY(-4px);box-shadow:0 18px 40px -28px rgba(16,22,25,.45)}
+.quote svg.qm{width:22px;height:22px;color:var(--accent-ink);opacity:.5}
+.quote blockquote{margin:0;font-family:var(--display);font-size:1.05rem;line-height:1.46;letter-spacing:-.005em}
+.byline{display:flex;flex-direction:column;gap:2px;margin-top:auto;font-size:.84rem}
+.byline b{font-weight:600}
+.byline span{color:var(--muted)}
+
+/* ============================================================
+   contact
+   ============================================================ */
+.contact{background:var(--ink);color:var(--on-ink);border-top:0}
+.contact-grid{display:grid;gap:clamp(40px,6vw,80px)}
+@media (min-width:900px){ .contact-grid{grid-template-columns:.9fr 1.1fr} }
+.contact h2{color:var(--on-ink)}
+.contact .lede{color:var(--on-ink-muted)}
+.contact-facts{display:flex;flex-direction:column;gap:var(--s4);margin-top:var(--s6)}
+.fact{display:flex;gap:var(--s3);align-items:flex-start;font-size:.92rem;color:var(--on-ink-muted)}
+.fact svg{width:17px;height:17px;color:var(--accent-glow);flex:none;margin-top:3px}
+form{display:flex;flex-direction:column;gap:var(--s4)}
+.field{display:flex;flex-direction:column;gap:7px}
+.field label{font-size:.76rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--on-ink-muted)}
+.field input,.field select,.field textarea{
+  font-family:var(--body);font-size:1rem;color:var(--on-ink);
+  background:rgba(246,244,240,.06);border:1px solid rgba(246,244,240,.2);
+  border-radius:10px;padding:12px 14px;width:100%;
+  transition:border-color .2s ease, background-color .2s ease;
+}
+.field textarea{resize:vertical;min-height:104px}
+.field input::placeholder,.field textarea::placeholder{color:rgba(166,176,175,.7)}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--accent-glow);background:rgba(246,244,240,.1);
+}
+.field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A6B0AF' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;background-size:16px;padding-right:40px}
+.field select option{background:var(--ink);color:var(--on-ink)}
+.form-row{display:grid;gap:var(--s4)}
+@media (min-width:560px){ .form-row{grid-template-columns:1fr 1fr} }
+.form-foot{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s4);margin-top:var(--s2)}
+.form-foot p{font-size:.82rem;color:var(--on-ink-muted)}
+.form-foot a{color:var(--accent-glow)}
+.form-status{
+  font-size:.9rem;color:var(--on-ink);background:rgba(44,110,78,.24);
+  border:1px solid rgba(126,216,166,.42);border-radius:10px;padding:12px 14px;
+}
+.form-status[hidden]{display:none}
+
+/* ============================================================
+   footer
+   ============================================================ */
+.footer{background:var(--ink);color:var(--on-ink-muted);padding-block:var(--s7);border-top:1px solid rgba(246,244,240,.13)}
+.footer-inner{display:flex;flex-wrap:wrap;gap:var(--s5);align-items:center;justify-content:space-between;font-size:.83rem}
+.footer a{color:var(--on-ink-muted);text-decoration:none}
+.footer a:hover{color:var(--on-ink)}
+.footer-links{display:flex;gap:var(--s5);flex-wrap:wrap}
+.disclaimer{max-width:64ch;font-size:.78rem;line-height:1.55;color:rgba(166,176,175,.75);margin-top:var(--s5)}
+
+/* ============================================================
+   reveals — only when JS is present, so no-JS shows everything
+   ============================================================ */
+.js .reveal{opacity:0;transform:translateY(18px)}
+.js .reveal.in{opacity:1;transform:none;transition:opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1)}
+.js .reveal.d1.in{transition-delay:.08s}
+.js .reveal.d2.in{transition-delay:.16s}
+.js .reveal.d3.in{transition-delay:.24s}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .blob{animation:none}
+  .js .reveal,.js .reveal.in{opacity:1;transform:none;transition:none}
+  *{transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+<script>document.documentElement.classList.add('js');</script>
+
+<!-- ══ NAV ══════════════════════════════════════════════════ -->
+<header class="nav" id="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top" aria-label="Swami Markets, back to top">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="16" cy="16" r="15" stroke="#A85B18" stroke-width="1.5"/>
+        <path d="M16 4a12 12 0 0 1 0 24" stroke="#101619" stroke-width="1.5"/>
+        <circle cx="16" cy="16" r="4.2" fill="#A85B18"/>
+      </svg>
+      Swami Markets
+    </a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#voices">Traders</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a class="btn btn-primary btn-sm" href="#contact">Book now</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ══ HERO ═════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="mesh" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="blob blob-4"></div>
+  </div>
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow eyebrow--onink">Kalshi &amp; Polymarket · Daily</p>
+      <h1 class="h1">Find the mispriced contract before the crowd closes the gap.</h1>
+      <p class="lede">Swami reads every open market each morning, scores it against its own forecast, and shows you the difference in cents — so you stop trading on vibes and start trading on spread.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#contact">
+          Book now
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13"/><path d="M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="#how">See how it works</a>
+      </div>
+      <p class="hero-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8z"/></svg>
+        1,840 traders get the 7:00am edge list. Brier score published every Sunday.
+      </p>
+    </div>
+
+    <aside class="glass" aria-label="Sample edge readout">
+      <div class="glass-head">
+        <span class="glass-title">Today&rsquo;s edge list</span>
+        <span class="glass-stamp num">07:00 ET</span>
+      </div>
+
+      <div class="row">
+        <div class="row-top">
+          <span class="row-name">Fed cuts rates at the March meeting</span>
+          <span class="row-edge up num">&#9650; +8&cent;</span>
+        </div>
+        <div class="bar"><span style="width:62%"></span><i class="tick" style="left:54%"></i></div>
+        <div class="row-legend"><span class="num">Swami 62%</span><span class="num">Market 54&cent;</span></div>
+      </div>
+
+      <div class="row">
+        <div class="row-top">
+          <span class="row-name">US CPI prints above 3.0% in June</span>
+          <span class="row-edge down num">&#9660; &minus;6&cent;</span>
+        </div>
+        <div class="bar"><span style="width:31%"></span><i class="tick" style="left:37%"></i></div>
+        <div class="row-legend"><span class="num">Swami 31%</span><span class="num">Market 37&cent;</span></div>
+      </div>
+
+      <div class="row">
+        <div class="row-top">
+          <span class="row-name">Government shutdown avoided by Oct 1</span>
+          <span class="row-edge up num">&#9650; +11&cent;</span>
+        </div>
+        <div class="bar"><span style="width:78%"></span><i class="tick" style="left:67%"></i></div>
+        <div class="row-legend"><span class="num">Swami 78%</span><span class="num">Market 67&cent;</span></div>
+      </div>
+
+      <p class="glass-stamp">Sample output. Positions are yours to size &mdash; Swami only shows the gap.</p>
+    </aside>
+  </div>
+</section>
+
+<!-- ══ HOW IT WORKS ═════════════════════════════════════════ -->
+<section class="section" id="how">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">How it works</p>
+      <h2 class="h2">Three steps, then it runs every morning without you.</h2>
+      <p class="lede">Set it up once on a 20-minute call. After that the edge list lands before the open.</p>
+    </div>
+
+    <ol class="steps">
+      <li class="step reveal">
+        <span class="step-head"><span class="step-n">STEP 01</span>
+          <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M3 12h12"/><path d="M3 18h7"/><circle cx="19" cy="16" r="3"/></svg></span>
+        <h3 class="h3">Tell Swami what you trade</h3>
+        <p>Rates, elections, weather, crypto, sports — pick the categories and the minimum edge worth waking up for. Everything outside your list stays out of your inbox.</p>
+      </li>
+      <li class="step reveal d1">
+        <span class="step-head"><span class="step-n">STEP 02</span>
+          <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M7 15l4-5 3.5 3L20 7"/><circle cx="20" cy="7" r="1.6" fill="currentColor" stroke="none"/></svg></span>
+        <h3 class="h3">Swami scores the whole board</h3>
+        <p>Overnight it re-forecasts every open contract from base rates, news flow and order-book behaviour, then compares its number to the last traded price.</p>
+      </li>
+      <li class="step reveal d2">
+        <span class="step-head"><span class="step-n">STEP 03</span>
+          <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg></span>
+        <h3 class="h3">You get the gaps at 7:00am</h3>
+        <p>One email, ranked by edge in cents, each line showing Swami&rsquo;s probability, the market price, and the reasoning in two sentences. Buy, fade, or skip.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ══ PRICING ══════════════════════════════════════════════ -->
+<section class="section" id="pricing">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Pricing</p>
+      <h2 class="h2">Priced to be paid back by one good fade.</h2>
+      <p class="lede">Monthly, cancel whenever. Every plan includes the Sunday calibration report.</p>
+    </div>
+
+    <div class="tiers">
+      <article class="tier reveal">
+        <h3 class="tier-name">Reader</h3>
+        <p class="tier-blurb">For the trader who wants the signal without the second screen.</p>
+        <div class="price"><b class="num">$19</b><span>/ month</span></div>
+        <hr>
+        <ul class="feats">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Daily top 5 edges, one category</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Swami probability vs. market price</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Weekly calibration report</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Ask Swami — 10 questions a month</li>
+        </ul>
+        <a class="btn btn-primary" href="#contact">Book now</a>
+        <p class="tier-note">No card for the first 14 days</p>
+      </article>
+
+      <article class="tier tier-feat reveal d1">
+        <span class="tier-badge">Most traders pick this</span>
+        <h3 class="tier-name">Operator</h3>
+        <p class="tier-blurb">Full board coverage, alerts when a price moves against Swami&rsquo;s number.</p>
+        <div class="price"><b class="num">$79</b><span>/ month</span></div>
+        <hr>
+        <ul class="feats">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Every category, unlimited edges</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Intraday alerts when a gap opens past 6&cent;</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Resolution-date and liquidity filters</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Unlimited Ask Swami, with sources</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Position journal with realised edge</li>
+        </ul>
+        <a class="btn btn-primary" href="#contact">Book now</a>
+        <p class="tier-note">Onboarding call included</p>
+      </article>
+
+      <article class="tier reveal d2">
+        <h3 class="tier-name">Desk</h3>
+        <p class="tier-blurb">For funds and syndicates running size across both venues.</p>
+        <div class="price"><b class="num">$249</b><span>/ month</span></div>
+        <hr>
+        <ul class="feats">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Everything in Operator, five seats</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>API access to the full forecast feed</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Custom markets scored on request</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>Backtests against your own book</li>
+        </ul>
+        <a class="btn btn-primary" href="#contact">Book now</a>
+        <p class="tier-note">Annual invoicing available</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TESTIMONIALS ═════════════════════════════════════════ -->
+<section class="section" id="voices">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Traders</p>
+      <h2 class="h2">What people do with the gap.</h2>
+    </div>
+
+    <div class="quotes">
+      <figure class="quote reveal">
+        <svg class="qm" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.6 5.4c-3.3 1.6-5.4 4.6-5.4 8.2 0 3 1.8 5 4.3 5 2.2 0 3.8-1.6 3.8-3.7 0-2-1.4-3.5-3.3-3.5-.4 0-.8 0-1.1.2.4-1.9 1.8-3.6 3.6-4.6zM19.5 5.4c-3.3 1.6-5.4 4.6-5.4 8.2 0 3 1.8 5 4.3 5 2.2 0 3.8-1.6 3.8-3.7 0-2-1.4-3.5-3.3-3.5-.4 0-.8 0-1.1.2.4-1.9 1.8-3.6 3.6-4.6z"/></svg>
+        <blockquote>I stopped reading headlines at 6am. The list tells me which three contracts are worth touching, and the other forty aren&rsquo;t.</blockquote>
+        <figcaption class="byline"><b>Marta Feld</b><span>Full-time event trader, Chicago</span></figcaption>
+      </figure>
+
+      <figure class="quote reveal d1">
+        <svg class="qm" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.6 5.4c-3.3 1.6-5.4 4.6-5.4 8.2 0 3 1.8 5 4.3 5 2.2 0 3.8-1.6 3.8-3.7 0-2-1.4-3.5-3.3-3.5-.4 0-.8 0-1.1.2.4-1.9 1.8-3.6 3.6-4.6zM19.5 5.4c-3.3 1.6-5.4 4.6-5.4 8.2 0 3 1.8 5 4.3 5 2.2 0 3.8-1.6 3.8-3.7 0-2-1.4-3.5-3.3-3.5-.4 0-.8 0-1.1.2.4-1.9 1.8-3.6 3.6-4.6z"/></svg>
+        <blockquote>The Sunday calibration report is the reason I trust it. Nobody else publishes where they were wrong.</blockquote>
+        <figcaption class="byline"><b>Devin Okafor</b><span>PM, Halcyon Event Fund</span></figcaption>
+      </figure>
+
+      <figure class="quote reveal d2">
+        <svg class="qm" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.6 5.4c-3.3 1.6-5.4 4.6-5.4 8.2 0 3 1.8 5 4.3 5 2.2 0 3.8-1.6 3.8-3.7 0-2-1.4-3.5-3.3-3.5-.4 0-.8 0-1.1.2.4-1.9 1.8-3.6 3.6-4.6zM19.5 5.4c-3.3 1.6-5.4 4.6-5.4 8.2 0 3 1.8 5 4.3 5 2.2 0 3.8-1.6 3.8-3.7 0-2-1.4-3.5-3.3-3.5-.4 0-.8 0-1.1.2.4-1.9 1.8-3.6 3.6-4.6z"/></svg>
+        <blockquote>An 11-cent gap on the shutdown market paid for two years of Operator. That was week three.</blockquote>
+        <figcaption class="byline"><b>Priya Raman</b><span>Weekend trader, Austin</span></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CONTACT ══════════════════════════════════════════════ -->
+<section class="section contact" id="contact">
+  <div class="wrap contact-grid">
+    <div class="reveal">
+      <p class="eyebrow eyebrow--onink">Book now</p>
+      <h2 class="h2" style="margin-top:var(--s4)">Twenty minutes, and your first edge list goes out tomorrow.</h2>
+      <p class="lede" style="margin-top:var(--s5)">We&rsquo;ll set your categories, your minimum edge, and your delivery time on the call. No deck, no pitch.</p>
+      <div class="contact-facts">
+        <p class="fact">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+          Calls run Monday to Thursday, 9:00am&ndash;4:00pm ET.
+        </p>
+        <p class="fact">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>
+          Prefer email? <a href="mailto:hello@swamimarkets.com" style="color:var(--accent-glow)">hello@swamimarkets.com</a>
+        </p>
+        <p class="fact">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.3-2.9 7.7-7 9-4.1-1.3-7-4.7-7-9V6z"/><path d="M9 12.5l2 2 4-4.5"/></svg>
+          We never see your positions, your broker, or your balance.
+        </p>
+      </div>
+    </div>
+
+    <form class="reveal d1" id="book-form" novalidate>
+      <div class="form-row">
+        <div class="field">
+          <label for="name">Name</label>
+          <input id="name" name="name" type="text" autocomplete="name" placeholder="Marta Feld" required>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" placeholder="you@domain.com" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="markets">Markets you trade most</label>
+        <select id="markets" name="markets">
+          <option>Rates &amp; macro</option>
+          <option>Politics &amp; elections</option>
+          <option>Crypto</option>
+          <option>Weather &amp; climate</option>
+          <option>Sports</option>
+          <option>A bit of everything</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="msg">What are you trying to fix?</label>
+        <textarea id="msg" name="msg" placeholder="I'm across about 30 contracts a week and I can't tell which ones are actually mispriced."></textarea>
+      </div>
+      <div class="form-foot">
+        <button class="btn btn-primary" type="submit">
+          Book now
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13"/><path d="M13 6l6 6-6 6"/></svg>
+        </button>
+        <p>We reply within one business day.</p>
+      </div>
+      <p class="form-status" id="form-status" hidden role="status"></p>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-inner">
+      <span>&copy; 2026 Swami Markets</span>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="#how">How it works</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#voices">Traders</a>
+        <a href="#contact">Book now</a>
+      </nav>
+    </div>
+    <p class="disclaimer">Swami Markets publishes probability research on event contracts. It is not investment advice, and it does not place, route, or hold trades. Prediction markets carry risk of total loss — size accordingly.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  // sticky nav state
+  var nav = document.getElementById('nav');
+  var ticking = false;
+  function onScroll(){
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){
+      nav.classList.toggle('is-stuck', window.scrollY > 8);
+      ticking = false;
+    });
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  // fade-up reveals
+  var items = document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){
+    for(var i=0;i<items.length;i++) items[i].classList.add('in');
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, {rootMargin:'0px 0px -12% 0px', threshold:0.12});
+    items.forEach(function(el){ io.observe(el); });
+  }
+
+  // booking form — placeholder handler, no backend wired yet
+  var form = document.getElementById('book-form');
+  var status = document.getElementById('form-status');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = form.name.value.trim();
+    var email = form.email.value.trim();
+    if(!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      status.hidden = false;
+      status.textContent = 'Add your name and a valid email so we can send the confirmation.';
+      return;
+    }
+    status.hidden = false;
+    status.textContent = 'Booked — check ' + email + ' for three times that work.';
+    form.reset();
+  });
+})();
+</script>
+</body>
+</html>
