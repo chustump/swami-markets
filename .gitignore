@@ -9,3 +9,7 @@ build/
 .env.production.local
 *.log
 .DS_Store
+
+# The committed Expo web build stores font assets under an assets/node_modules
+# path; re-include it so the deploy is complete.
+!public/app/assets/node_modules/
