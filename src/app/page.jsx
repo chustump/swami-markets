@@ -230,6 +230,13 @@ function prioCol(p) {
   const s = String(p || "").toLowerCase();
   return s.startsWith("high") ? T.green : s.startsWith("med") ? T.yellow : T.muted;
 }
+function channelMeta(ch) {
+  const c = String(ch || "").toLowerCase();
+  if (c.includes("email")) return { icon: "✉️", col: T.blue, label: "Email" };
+  if (c.includes("linkedin")) return { icon: "in", col: "#4f9be8", label: "LinkedIn" };
+  if (c.includes("phone") || c.includes("call")) return { icon: "☎️", col: T.orange, label: "Phone" };
+  return { icon: "•", col: T.muted, label: ch || "Touch" };
+}
 
 // Small copy-to-clipboard button
 function CopyBtn({ text, label = "Copy" }) {
@@ -282,9 +289,20 @@ function SDRTab({ mob }) {
     } catch (e) { setErr(e.message); patch(p._id, { drafting: false }); }
   };
 
+  const buildCadence = async (p) => {
+    setErr(""); patch(p._id, { cadencing: true });
+    try {
+      const r = await fetch("/api/sdr/cadence", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ product, pitch, tone, prospect: p }) });
+      const d = await r.json();
+      if (d.error) { setErr(d.error); patch(p._id, { cadencing: false }); return; }
+      patch(p._id, { cadence: d.cadence, cadencing: false });
+    } catch (e) { setErr(e.message); patch(p._id, { cadencing: false }); }
+  };
+  const setTouchField = (id, idx, field, val) => patch(id, p => ({ cadence: p.cadence.map((t, i) => i === idx ? { ...t, [field]: val } : t) }));
+
   const approved = prospects.filter(p => p.approved && p.draft);
   const exportApproved = () => {
-    const data = approved.map(p => ({ name: p.name, title: p.title, company: p.company, personaRole: p.personaRole, linkedinQuery: p.linkedinQuery, email: { subject: p.draft.subject, body: p.draft.body, followUp: p.draft.followUp }, linkedin: p.draft.linkedin || {} }));
+    const data = approved.map(p => ({ name: p.name, title: p.title, company: p.company, personaRole: p.personaRole, linkedinQuery: p.linkedinQuery, email: { subject: p.draft.subject, body: p.draft.body, followUp: p.draft.followUp }, linkedin: p.draft.linkedin || {}, cadence: p.cadence || [] }));
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "swami-sdr-approved.json"; a.click();
@@ -302,7 +320,7 @@ function SDRTab({ mob }) {
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}><SwamiMini size={mob ? 40 : 48} /></div>
         <div style={{ fontSize: mob ? 22 : 28, fontWeight: 800, color: T.blue }}>Swami SDR</div>
         <div style={{ fontSize: mob ? 12 : 13, color: T.soft, marginTop: 4, maxWidth: 540, margin: "4px auto 0" }}>Agentic outbound prospecting. Target a company, and the Swami maps who to reach, drafts a personalized email + LinkedIn connection note — you review, then send in one click.</div>
-        <div style={{ fontSize: 11, color: T.muted, marginTop: 10, display: "inline-block", background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, padding: "5px 12px" }}>1️⃣ Target → 2️⃣ Find people → 3️⃣ Draft → 4️⃣ Approve → 5️⃣ Email / LinkedIn</div>
+        <div style={{ fontSize: 11, color: T.muted, marginTop: 10, display: "inline-block", background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, padding: "5px 12px" }}>1️⃣ Target → 2️⃣ Find people → 3️⃣ Draft → 4️⃣ Build cadence → 5️⃣ Approve & send</div>
       </div>
 
       {/* CAMPAIGN SETUP */}
@@ -400,7 +418,48 @@ function SDRTab({ mob }) {
                 <a href={gUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: `linear-gradient(135deg, ${T.blue}, ${T.purple})`, borderRadius: 8, padding: "8px 16px", color: "#fff", fontSize: 12, fontWeight: 700 }}>✉️ Open in Gmail</a>
                 <a href={linkedinSearchUrl(liQuery)} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: "#0a66c2", borderRadius: 8, padding: "8px 16px", color: "#fff", fontSize: 12, fontWeight: 700 }}>in  Connect on LinkedIn</a>
                 <button onClick={() => draftFor(p)} disabled={p.drafting} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, padding: "8px 16px", color: T.soft, fontSize: 12, fontWeight: 600, cursor: p.drafting ? "wait" : "pointer" }}>{p.drafting ? "…" : "↻ Regenerate"}</button>
+                {!p.cadence && <button onClick={() => buildCadence(p)} disabled={p.cadencing} style={{ background: `linear-gradient(135deg, ${T.purple}, ${T.orange})`, border: "none", borderRadius: 8, padding: "8px 16px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: p.cadencing ? "wait" : "pointer" }}>{p.cadencing ? "📅 Building…" : "📅 Build 10-touch cadence"}</button>}
               </div>
+            </div>}
+
+            {/* CADENCE TIMELINE */}
+            {p.cadence && <div style={{ marginTop: 14, background: T.bg, border: `1px solid ${T.purple}33`, borderRadius: 12, padding: mob ? 12 : 14 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, color: T.purple }}>📅 {p.cadence.length}-TOUCH NEPQ CADENCE · ~22 DAYS</div>
+                <button onClick={() => buildCadence(p)} disabled={p.cadencing} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 7, padding: "5px 10px", color: T.soft, fontSize: 11, fontWeight: 600, cursor: p.cadencing ? "wait" : "pointer" }}>{p.cadencing ? "…" : "↻ Rebuild"}</button>
+              </div>
+              {p.cadence.map((t, i) => {
+                const cm = channelMeta(t.channel);
+                const tUrl = cm.label === "Email" ? gmailComposeUrl({ subject: t.subject, body: t.body }) : null;
+                return (
+                  <div key={i} style={{ display: "flex", gap: mob ? 8 : 12, marginBottom: i === p.cadence.length - 1 ? 0 : 14 }}>
+                    {/* rail */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: mob ? 34 : 40 }}>
+                      <div style={{ fontSize: 8, fontWeight: 700, color: T.muted, letterSpacing: .5 }}>DAY</div>
+                      <div style={{ width: mob ? 30 : 34, height: mob ? 30 : 34, borderRadius: "50%", background: cm.col + "1a", border: `1px solid ${cm.col}55`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: cm.col, fontFamily: "monospace" }}>{t.day}</div>
+                      {i !== p.cadence.length - 1 && <div style={{ width: 2, flex: 1, minHeight: 14, background: T.border, marginTop: 4 }} />}
+                    </div>
+                    {/* content */}
+                    <div style={{ flex: 1, minWidth: 0, background: T.card, border: `1px solid ${T.border}`, borderRadius: 10, padding: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: cm.col, background: cm.col + "18", padding: "2px 7px", borderRadius: 4 }}>{cm.icon} {cm.label}</span>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: T.soft }}>{t.type}</span>
+                        </div>
+                        {t.nepq && <span style={{ fontSize: 9, fontWeight: 700, color: T.dim, letterSpacing: .3 }}>NEPQ · {t.nepq}</span>}
+                      </div>
+                      {t.subject !== undefined && cm.label === "Email" && <input value={t.subject || ""} onChange={e => setTouchField(p._id, i, "subject", e.target.value)} style={{ ...smallInput, fontWeight: 600, marginBottom: 8, background: T.bg }} />}
+                      <textarea value={t.body || ""} onChange={e => setTouchField(p._id, i, "body", e.target.value)} rows={t.body && t.body.length > 160 ? 5 : 3} style={{ ...smallInput, background: T.bg, color: T.soft, lineHeight: 1.55, resize: "vertical", fontFamily: "inherit" }} />
+                      <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                        <CopyBtn text={cm.label === "Email" ? `${t.subject ? "Subject: " + t.subject + "\n\n" : ""}${t.body || ""}` : t.body} label="Copy" />
+                        {tUrl && <a href={tUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: T.blue + "1a", border: `1px solid ${T.blue}44`, borderRadius: 7, padding: "5px 10px", color: T.blue, fontSize: 11, fontWeight: 700 }}>✉️ Gmail</a>}
+                        {cm.label === "LinkedIn" && <a href={linkedinSearchUrl(liQuery)} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: "#0a66c2", borderRadius: 7, padding: "5px 10px", color: "#fff", fontSize: 11, fontWeight: 700 }}>in Open</a>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              <div style={{ fontSize: 10, color: T.dim, marginTop: 12, lineHeight: 1.6 }}>Phone touches are voicemail / dial scripts to read live. Vary nothing blindly — glance at each touch before it goes out.</div>
             </div>}
           </div>
         );
