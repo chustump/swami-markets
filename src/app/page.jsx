@@ -209,6 +209,12 @@ function gmailComposeUrl({ to = "", subject = "", body = "" }) {
   const p = new URLSearchParams({ view: "cm", fs: "1", to, su: subject, body });
   return "https://mail.google.com/mail/?" + p.toString();
 }
+function linkedinSearchUrl(q) {
+  return "https://www.linkedin.com/search/results/people/?keywords=" + encodeURIComponent(q || "");
+}
+function reoSearchUrl(q) {
+  return "https://reo.dev/?q=" + encodeURIComponent(q || "");
+}
 
 const SEGMENT_PRESETS = [
   "Crypto & politics prediction-market traders",
@@ -225,11 +231,22 @@ function prioCol(p) {
   return s.startsWith("high") ? T.green : s.startsWith("med") ? T.yellow : T.muted;
 }
 
+// Small copy-to-clipboard button
+function CopyBtn({ text, label = "Copy" }) {
+  const [done, setDone] = useState(false);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(text || ""); setDone(true); setTimeout(() => setDone(false), 1400); } catch {}
+  };
+  return <button onClick={copy} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 7, padding: "5px 10px", color: done ? T.green : T.soft, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{done ? "✓ Copied" : `⧉ ${label}`}</button>;
+}
+
 function SDRTab({ mob }) {
   const pad = mob ? "0 16px" : "0";
+  const [mode, setMode] = useState("company"); // "company" | "segment"
   const [product, setProduct] = useState("Swami Markets");
   const [pitch, setPitch] = useState(DEFAULT_PITCH);
   const [segment, setSegment] = useState(SEGMENT_PRESETS[0]);
+  const [company, setCompany] = useState("");
   const [tone, setTone] = useState(TONES[0]);
   const [count, setCount] = useState(6);
   const [prospects, setProspects] = useState([]);
@@ -238,11 +255,14 @@ function SDRTab({ mob }) {
 
   const patch = (id, upd) => setProspects(ps => ps.map(p => p._id === id ? { ...p, ...(typeof upd === "function" ? upd(p) : upd) } : p));
   const setDraftField = (id, field, val) => patch(id, p => ({ draft: { ...p.draft, [field]: val } }));
+  const setLinkedinField = (id, field, val) => patch(id, p => ({ draft: { ...p.draft, linkedin: { ...(p.draft.linkedin || {}), [field]: val } } }));
 
   const genProspects = async () => {
+    if (mode === "company" && !company.trim()) { setErr("Enter a company to target."); return; }
     setLoading(true); setErr("");
     try {
-      const r = await fetch("/api/sdr/prospects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ product, pitch, segment, count }) });
+      const payload = mode === "company" ? { product, pitch, company, count } : { product, pitch, segment, count };
+      const r = await fetch("/api/sdr/prospects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const d = await r.json();
       if (d.error) { setErr(d.error); setProspects([]); }
       else {
@@ -264,7 +284,7 @@ function SDRTab({ mob }) {
 
   const approved = prospects.filter(p => p.approved && p.draft);
   const exportApproved = () => {
-    const data = approved.map(p => ({ name: p.name, title: p.title, company: p.company, subject: p.draft.subject, body: p.draft.body, followUp: p.draft.followUp }));
+    const data = approved.map(p => ({ name: p.name, title: p.title, company: p.company, personaRole: p.personaRole, linkedinQuery: p.linkedinQuery, email: { subject: p.draft.subject, body: p.draft.body, followUp: p.draft.followUp }, linkedin: p.draft.linkedin || {} }));
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "swami-sdr-approved.json"; a.click();
@@ -273,6 +293,7 @@ function SDRTab({ mob }) {
 
   const inputStyle = { width: "100%", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, padding: "10px 12px", color: T.text, fontSize: 13, outline: "none", boxSizing: "border-box" };
   const labelStyle = { fontSize: 10, fontWeight: 700, letterSpacing: .8, color: T.muted, marginBottom: 6, display: "block", textTransform: "uppercase" };
+  const smallInput = { width: "100%", background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, padding: "8px 10px", color: T.text, fontSize: 13, outline: "none", boxSizing: "border-box" };
 
   return (
     <div style={{ padding: pad }}>
@@ -280,32 +301,41 @@ function SDRTab({ mob }) {
       <div style={{ textAlign: "center", padding: mob ? "20px 8px" : "24px", marginBottom: 20, borderRadius: 18, background: `radial-gradient(ellipse at center top, ${T.blue}14, ${T.purple}06 55%, transparent 82%)`, border: `1px solid ${T.blue}22` }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}><SwamiMini size={mob ? 40 : 48} /></div>
         <div style={{ fontSize: mob ? 22 : 28, fontWeight: 800, color: T.blue }}>Swami SDR</div>
-        <div style={{ fontSize: mob ? 12 : 13, color: T.soft, marginTop: 4, maxWidth: 520, margin: "4px auto 0" }}>Agentic outbound prospecting. The Swami researches your target segment, drafts personalized cold emails, and hands approved drafts to Gmail — you review and send.</div>
-        <div style={{ fontSize: 11, color: T.muted, marginTop: 10, display: "inline-block", background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, padding: "5px 12px" }}>1️⃣ Research → 2️⃣ Draft → 3️⃣ Approve → 4️⃣ Open in Gmail</div>
+        <div style={{ fontSize: mob ? 12 : 13, color: T.soft, marginTop: 4, maxWidth: 540, margin: "4px auto 0" }}>Agentic outbound prospecting. Target a company, and the Swami maps who to reach, drafts a personalized email + LinkedIn connection note — you review, then send in one click.</div>
+        <div style={{ fontSize: 11, color: T.muted, marginTop: 10, display: "inline-block", background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, padding: "5px 12px" }}>1️⃣ Target → 2️⃣ Find people → 3️⃣ Draft → 4️⃣ Approve → 5️⃣ Email / LinkedIn</div>
       </div>
 
       {/* CAMPAIGN SETUP */}
       <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 14, padding: mob ? 14 : 18, marginBottom: 18 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 14 }}>🎯 Campaign Setup</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 14 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.text }}>🎯 Campaign Setup</div>
+          <div style={{ display: "flex", gap: 3, background: T.bg, borderRadius: 9, padding: 3, border: `1px solid ${T.border}` }}>
+            {[{ k: "company", l: "🏢 By company" }, { k: "segment", l: "🌐 By segment" }].map(m => (
+              <button key={m.k} onClick={() => setMode(m.k)} style={{ background: mode === m.k ? T.hover : "transparent", border: "none", borderRadius: 7, padding: "6px 12px", color: mode === m.k ? T.text : T.muted, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{m.l}</button>
+            ))}
+          </div>
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "1fr 1fr", gap: 14, marginBottom: 14 }}>
           <div><label style={labelStyle}>Product</label><input value={product} onChange={e => setProduct(e.target.value)} style={inputStyle} /></div>
-          <div><label style={labelStyle}>Target Segment</label><input value={segment} onChange={e => setSegment(e.target.value)} list="seg-presets" style={inputStyle} /><datalist id="seg-presets">{SEGMENT_PRESETS.map(s => <option key={s} value={s} />)}</datalist></div>
+          {mode === "company"
+            ? <div><label style={labelStyle}>Target Company</label><input value={company} onChange={e => setCompany(e.target.value)} placeholder="e.g. DraftKings, Coinbase, Jane Street" style={inputStyle} /></div>
+            : <div><label style={labelStyle}>Target Segment</label><input value={segment} onChange={e => setSegment(e.target.value)} list="seg-presets" style={inputStyle} /><datalist id="seg-presets">{SEGMENT_PRESETS.map(s => <option key={s} value={s} />)}</datalist></div>}
         </div>
         <div style={{ marginBottom: 14 }}><label style={labelStyle}>What it does (pitch)</label><textarea value={pitch} onChange={e => setPitch(e.target.value)} rows={2} style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }} /></div>
         <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "1fr 1fr auto", gap: 14, alignItems: "end" }}>
           <div><label style={labelStyle}>Tone</label><select value={tone} onChange={e => setTone(e.target.value)} style={inputStyle}>{TONES.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
-          <div><label style={labelStyle}>Prospects</label><input type="number" min={1} max={10} value={count} onChange={e => setCount(e.target.value)} style={inputStyle} /></div>
-          <button onClick={genProspects} disabled={loading} style={{ background: loading ? T.dim : `linear-gradient(135deg, ${T.blue}, ${T.purple})`, border: "none", borderRadius: 10, padding: "11px 18px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: loading ? "wait" : "pointer", gridColumn: mob ? "1 / -1" : "auto", whiteSpace: "nowrap" }}>{loading ? "🔮 Researching…" : "🔮 Generate Prospects"}</button>
+          <div><label style={labelStyle}>{mode === "company" ? "People" : "Prospects"}</label><input type="number" min={1} max={10} value={count} onChange={e => setCount(e.target.value)} style={inputStyle} /></div>
+          <button onClick={genProspects} disabled={loading} style={{ background: loading ? T.dim : `linear-gradient(135deg, ${T.blue}, ${T.purple})`, border: "none", borderRadius: 10, padding: "11px 18px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: loading ? "wait" : "pointer", gridColumn: mob ? "1 / -1" : "auto", whiteSpace: "nowrap" }}>{loading ? "🔮 Researching…" : mode === "company" ? "🔮 Find People" : "🔮 Generate Prospects"}</button>
         </div>
       </div>
 
       {err && <div style={{ background: T.red + "12", border: `1px solid ${T.red}33`, borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 12, color: T.red }}>{err}</div>}
 
-      {loading && <div style={{ textAlign: "center", padding: 30 }}><CrystalBall size={90} /><div style={{ fontSize: 13, color: T.blue, marginTop: 8 }}>The Swami is researching your market…</div></div>}
+      {loading && <div style={{ textAlign: "center", padding: 30 }}><CrystalBall size={90} /><div style={{ fontSize: 13, color: T.blue, marginTop: 8 }}>The Swami is researching…</div></div>}
 
       {/* APPROVED BAR */}
       {approved.length > 0 && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, background: T.green + "10", border: `1px solid ${T.green}33`, borderRadius: 12, padding: "12px 16px", marginBottom: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.green }}>✓ {approved.length} draft{approved.length > 1 ? "s" : ""} approved & ready for Gmail</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.green }}>✓ {approved.length} contact{approved.length > 1 ? "s" : ""} approved & ready</div>
         <button onClick={exportApproved} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, padding: "7px 14px", color: T.soft, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>⬇ Export approved (JSON)</button>
       </div>}
 
@@ -313,6 +343,8 @@ function SDRTab({ mob }) {
       {prospects.map(p => {
         const c = prioCol(p.priority);
         const gUrl = p.draft ? gmailComposeUrl({ subject: p.draft.subject, body: p.draft.body }) : "#";
+        const liQuery = p.linkedinQuery || `${p.name || ""} ${p.company || ""}`.trim();
+        const li = p.draft?.linkedin || {};
         return (
           <div key={p._id} style={{ background: T.card, border: `1px solid ${p.approved ? T.green + "55" : T.border}`, borderRadius: 14, padding: mob ? 14 : 16, marginBottom: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
@@ -320,6 +352,7 @@ function SDRTab({ mob }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 3 }}>
                   <span style={{ fontSize: 14, fontWeight: 700, color: T.text }}>{p.name}</span>
                   <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: .8, color: c, background: c + "18", padding: "2px 7px", borderRadius: 4 }}>{String(p.priority || "").toUpperCase() || "—"}</span>
+                  {p.personaRole && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: .5, color: T.purple, background: T.purple + "18", padding: "2px 7px", borderRadius: 4 }}>{p.personaRole}</span>}
                 </div>
                 <div style={{ fontSize: 11.5, color: T.soft }}>{p.title}{p.company ? ` · ${p.company}` : ""}</div>
               </div>
@@ -328,17 +361,44 @@ function SDRTab({ mob }) {
             {p.fitReason && <div style={{ fontSize: 12, color: T.soft, lineHeight: 1.6, marginTop: 10 }}><span style={{ color: T.blue, fontWeight: 700 }}>Fit: </span>{p.fitReason}</div>}
             {p.hook && <div style={{ fontSize: 12, color: T.muted, lineHeight: 1.6, marginTop: 4 }}><span style={{ color: T.orange, fontWeight: 700 }}>Hook: </span>{p.hook}</div>}
 
-            {!p.draft && <button onClick={() => draftFor(p)} disabled={p.drafting} style={{ marginTop: 12, background: `linear-gradient(135deg, ${T.orange}18, ${T.purple}18)`, border: `1px solid ${T.orange}44`, borderRadius: 8, padding: "8px 16px", color: T.orange, fontSize: 12, fontWeight: 700, cursor: p.drafting ? "wait" : "pointer" }}>{p.drafting ? "✍️ Drafting…" : "✍️ Draft Email"}</button>}
+            {/* FIND-ON links */}
+            <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+              <a href={linkedinSearchUrl(liQuery)} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: "#0a66c2", borderRadius: 8, padding: "7px 12px", color: "#fff", fontSize: 11.5, fontWeight: 700 }}>in  Find on LinkedIn</a>
+              <a href={reoSearchUrl(liQuery)} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, padding: "7px 12px", color: T.soft, fontSize: 11.5, fontWeight: 700 }}>◆ Find on REO.dev</a>
+            </div>
+
+            {!p.draft && <button onClick={() => draftFor(p)} disabled={p.drafting} style={{ marginTop: 12, background: `linear-gradient(135deg, ${T.orange}18, ${T.purple}18)`, border: `1px solid ${T.orange}44`, borderRadius: 8, padding: "8px 16px", color: T.orange, fontSize: 12, fontWeight: 700, cursor: p.drafting ? "wait" : "pointer" }}>{p.drafting ? "✍️ Drafting…" : "✍️ Draft Outreach"}</button>}
 
             {p.draft && <div style={{ marginTop: 14, background: T.bg, border: `1px solid ${T.border}`, borderRadius: 12, padding: mob ? 12 : 14 }}>
+              {/* EMAIL */}
+              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, color: T.blue, marginBottom: 10 }}>✉️ COLD EMAIL</div>
               <label style={labelStyle}>Subject</label>
-              <input value={p.draft.subject || ""} onChange={e => setDraftField(p._id, "subject", e.target.value)} style={{ width: "100%", background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, padding: "8px 10px", color: T.text, fontSize: 13, fontWeight: 600, outline: "none", boxSizing: "border-box", marginBottom: 12 }} />
+              <input value={p.draft.subject || ""} onChange={e => setDraftField(p._id, "subject", e.target.value)} style={{ ...smallInput, fontWeight: 600, marginBottom: 12 }} />
               <label style={labelStyle}>Body</label>
-              <textarea value={p.draft.body || ""} onChange={e => setDraftField(p._id, "body", e.target.value)} rows={7} style={{ width: "100%", background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, padding: "10px", color: T.soft, fontSize: 13, lineHeight: 1.6, outline: "none", boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }} />
+              <textarea value={p.draft.body || ""} onChange={e => setDraftField(p._id, "body", e.target.value)} rows={7} style={{ ...smallInput, color: T.soft, lineHeight: 1.6, resize: "vertical", fontFamily: "inherit" }} />
               {p.draft.followUp && <div style={{ fontSize: 11.5, color: T.muted, marginTop: 10, fontStyle: "italic" }}><span style={{ fontWeight: 700, color: T.dim, fontStyle: "normal" }}>Follow-up: </span>{p.draft.followUp}</div>}
-              <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+
+              {/* LINKEDIN */}
+              <div style={{ height: 1, background: T.border, margin: "16px 0" }} />
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, color: "#4f9be8" }}>in  LINKEDIN</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                <label style={{ ...labelStyle, marginBottom: 0 }}>Connection note <span style={{ color: (li.connectionNote || "").length > 200 ? T.red : T.dim, textTransform: "none", letterSpacing: 0 }}>· {(li.connectionNote || "").length}/200</span></label>
+                <CopyBtn text={li.connectionNote} label="Copy note" />
+              </div>
+              <textarea value={li.connectionNote || ""} onChange={e => setLinkedinField(p._id, "connectionNote", e.target.value)} rows={2} style={{ ...smallInput, color: T.soft, lineHeight: 1.5, resize: "vertical", fontFamily: "inherit", marginBottom: 12 }} />
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                <label style={{ ...labelStyle, marginBottom: 0 }}>First DM (after they accept)</label>
+                <CopyBtn text={li.dm} label="Copy DM" />
+              </div>
+              <textarea value={li.dm || ""} onChange={e => setLinkedinField(p._id, "dm", e.target.value)} rows={3} style={{ ...smallInput, color: T.soft, lineHeight: 1.5, resize: "vertical", fontFamily: "inherit" }} />
+
+              {/* ACTIONS */}
+              <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
                 <button onClick={() => patch(p._id, { approved: !p.approved })} style={{ background: p.approved ? T.green + "18" : T.green, border: p.approved ? `1px solid ${T.green}55` : "none", borderRadius: 8, padding: "8px 16px", color: p.approved ? T.green : "#04121a", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>{p.approved ? "✓ Approved — undo" : "✓ Approve"}</button>
-                <a href={gUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: `linear-gradient(135deg, ${T.blue}, ${T.purple})`, borderRadius: 8, padding: "8px 16px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>✉️ Open in Gmail</a>
+                <a href={gUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: `linear-gradient(135deg, ${T.blue}, ${T.purple})`, borderRadius: 8, padding: "8px 16px", color: "#fff", fontSize: 12, fontWeight: 700 }}>✉️ Open in Gmail</a>
+                <a href={linkedinSearchUrl(liQuery)} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: "#0a66c2", borderRadius: 8, padding: "8px 16px", color: "#fff", fontSize: 12, fontWeight: 700 }}>in  Connect on LinkedIn</a>
                 <button onClick={() => draftFor(p)} disabled={p.drafting} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, padding: "8px 16px", color: T.soft, fontSize: 12, fontWeight: 600, cursor: p.drafting ? "wait" : "pointer" }}>{p.drafting ? "…" : "↻ Regenerate"}</button>
               </div>
             </div>}
@@ -346,9 +406,9 @@ function SDRTab({ mob }) {
         );
       })}
 
-      {!loading && prospects.length === 0 && !err && <div style={{ textAlign: "center", padding: "30px 16px", color: T.muted, fontSize: 13 }}>Set up your campaign above and let the Swami build your prospect list. 🔮</div>}
+      {!loading && prospects.length === 0 && !err && <div style={{ textAlign: "center", padding: "30px 16px", color: T.muted, fontSize: 13 }}>{mode === "company" ? "Enter a company above and the Swami will map who to reach. 🔮" : "Set up your campaign above and let the Swami build your prospect list. 🔮"}</div>}
 
-      <div style={{ fontSize: 10.5, color: T.dim, marginTop: 18, lineHeight: 1.6, textAlign: "center" }}>Prospect profiles are AI-researched target archetypes — validate contacts before sending. Nothing is sent automatically; "Open in Gmail" pre-fills a draft you review and send yourself.</div>
+      <div style={{ fontSize: 10.5, color: T.dim, marginTop: 18, lineHeight: 1.7, textAlign: "center", maxWidth: 620, margin: "18px auto 0" }}>People are AI-researched target roles — verify each contact on LinkedIn / REO.dev / Apollo before outreach. Nothing sends automatically: "Open in Gmail" pre-fills a draft, and "Connect on LinkedIn" opens the search so you send the note yourself (automated LinkedIn requests violate its terms). Wire a data-source API key to auto-pull verified contacts.</div>
     </div>
   );
 }
