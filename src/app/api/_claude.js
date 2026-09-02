@@ -2,7 +2,8 @@
 // Model is overridable via env so deploys can pin a specific version.
 export const SWAMI_MODEL = process.env.SWAMI_MODEL || "claude-sonnet-5";
 
-export async function callClaude({ system, prompt, maxTokens = 1024, model = SWAMI_MODEL }) {
+export async function callClaude({ system, prompt, messages, maxTokens = 1024, model = SWAMI_MODEL }) {
+  const msgs = Array.isArray(messages) && messages.length ? messages : [{ role: "user", content: prompt }];
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -14,7 +15,7 @@ export async function callClaude({ system, prompt, maxTokens = 1024, model = SWA
       model,
       max_tokens: maxTokens,
       ...(system ? { system } : {}),
-      messages: [{ role: "user", content: prompt }],
+      messages: msgs,
     }),
   });
 

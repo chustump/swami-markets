@@ -472,6 +472,169 @@ function SDRTab({ mob }) {
   );
 }
 
+/* ══ NEPQ COACH (AskJeremy-style live sales coach) ═════════════ */
+const COACH_MODES = [
+  { k: "live", l: "🎙️ Live Coach", desc: "On a call now — get the next NEPQ question in real time." },
+  { k: "objection", l: "🛡️ Objection", desc: "Prospect pushed back — get the NEPQ response." },
+  { k: "debrief", l: "📝 Debrief", desc: "Paste a Granola / Zoom transcript — get scored + next move." },
+];
+const LIVE_CHIPS = ["Call just started", "They went quiet", "Asked about price", "\"Send me some info\"", "\"I need to think about it\"", "\"We already use someone\"", "Seems interested — what now?"];
+const OBJECTION_CHIPS = ["It's too expensive", "I need to think about it", "Send me an email", "We're happy with our current setup", "I need to talk to my partner", "Now's not a good time"];
+
+function gradeCol(g) {
+  const s = String(g || "").toLowerCase();
+  return s.startsWith("strong") ? T.green : s.startsWith("weak") ? T.red : T.yellow;
+}
+
+function CoachTab({ mob }) {
+  const pad = mob ? "0 16px" : "0";
+  const [mode, setMode] = useState("live");
+  const [context, setContext] = useState("Selling Swami Markets (prediction-markets oracle) to fintech / trading-app teams.");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+
+  // live
+  const [chat, setChat] = useState([]); // {role, content}
+  const [input, setInput] = useState("");
+  // objection
+  const [objText, setObjText] = useState("");
+  const [objReply, setObjReply] = useState("");
+  // debrief
+  const [transcript, setTranscript] = useState("");
+  const [debrief, setDebrief] = useState(null);
+  const [debriefText, setDebriefText] = useState("");
+
+  const post = (payload) => fetch("/api/coach", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).then(r => r.json());
+
+  const sendLive = async (text) => {
+    const msg = (text ?? input).trim();
+    if (!msg || loading) return;
+    setErr(""); setInput("");
+    const next = [...chat, { role: "user", content: msg }];
+    setChat(next); setLoading(true);
+    try {
+      const d = await post({ mode: "live", messages: next, context });
+      if (d.error) setErr(d.error);
+      else setChat([...next, { role: "assistant", content: d.reply || "" }]);
+    } catch (e) { setErr(e.message); } finally { setLoading(false); }
+  };
+
+  const runObjection = async (text) => {
+    const msg = (text ?? objText).trim();
+    if (!msg || loading) return;
+    setErr(""); setObjText(msg); setObjReply(""); setLoading(true);
+    try {
+      const d = await post({ mode: "objection", input: msg, context });
+      if (d.error) setErr(d.error); else setObjReply(d.reply || "");
+    } catch (e) { setErr(e.message); } finally { setLoading(false); }
+  };
+
+  const runDebrief = async () => {
+    if (!transcript.trim() || loading) return;
+    setErr(""); setDebrief(null); setDebriefText(""); setLoading(true);
+    try {
+      const d = await post({ mode: "debrief", input: transcript, context });
+      if (d.error) setErr(d.error);
+      else if (d.debrief) setDebrief(d.debrief);
+      else setDebriefText(d.reply || "");
+    } catch (e) { setErr(e.message); } finally { setLoading(false); }
+  };
+
+  const inputStyle = { width: "100%", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, padding: "10px 12px", color: T.text, fontSize: 13, outline: "none", boxSizing: "border-box" };
+  const labelStyle = { fontSize: 10, fontWeight: 700, letterSpacing: .8, color: T.muted, marginBottom: 6, display: "block", textTransform: "uppercase" };
+  const chip = (onClick, label, key) => <button key={key} onClick={onClick} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, padding: "6px 11px", color: T.soft, fontSize: 11.5, cursor: "pointer" }}>{label}</button>;
+
+  return (
+    <div style={{ padding: pad }}>
+      {/* HERO */}
+      <div style={{ textAlign: "center", padding: mob ? "20px 8px" : "24px", marginBottom: 18, borderRadius: 18, background: `radial-gradient(ellipse at center top, ${T.orange}16, ${T.purple}06 55%, transparent 82%)`, border: `1px solid ${T.orange}22` }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}><SwamiMini size={mob ? 40 : 48} /></div>
+        <div style={{ fontSize: mob ? 22 : 28, fontWeight: 800, color: T.orange }}>NEPQ Sales Coach</div>
+        <div style={{ fontSize: mob ? 12 : 13, color: T.soft, marginTop: 4, maxWidth: 560, margin: "4px auto 0" }}>Live in-call guidance, objection handling, and post-call debriefs — grounded in Jeremy Miner's NEPQ method. Feed it what's happening and it tells you the exact question to ask next.</div>
+      </div>
+
+      {/* CONTEXT */}
+      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: mob ? 12 : 14, marginBottom: 14 }}>
+        <label style={labelStyle}>Call context — what you're selling / who you're talking to</label>
+        <input value={context} onChange={e => setContext(e.target.value)} style={inputStyle} />
+      </div>
+
+      {/* MODE TABS */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
+        {COACH_MODES.map(m => (
+          <button key={m.k} onClick={() => { setMode(m.k); setErr(""); }} style={{ flex: mob ? "1 1 30%" : "0 0 auto", background: mode === m.k ? `linear-gradient(135deg, ${T.orange}, ${T.purple})` : T.card, border: `1px solid ${mode === m.k ? "transparent" : T.border}`, borderRadius: 10, padding: "9px 14px", color: mode === m.k ? "#fff" : T.soft, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>{m.l}</button>
+        ))}
+      </div>
+      <div style={{ fontSize: 11, color: T.muted, marginBottom: 14 }}>{COACH_MODES.find(m => m.k === mode)?.desc}</div>
+
+      {err && <div style={{ background: T.red + "12", border: `1px solid ${T.red}33`, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 12, color: T.red }}>{err}</div>}
+
+      {/* ── LIVE ── */}
+      {mode === "live" && <div>
+        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: mob ? 12 : 14, marginBottom: 12, minHeight: 180 }}>
+          {chat.length === 0 && !loading && <div style={{ color: T.muted, fontSize: 12.5, lineHeight: 1.6, textAlign: "center", padding: "24px 8px" }}>Tell the Swami what's happening on the call — tap a moment below or type what the prospect just said.</div>}
+          {chat.map((m, i) => m.role === "user"
+            ? <div key={i} style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}><div style={{ background: T.hover, borderRadius: "12px 12px 2px 12px", padding: "8px 12px", fontSize: 12.5, color: T.text, maxWidth: "85%" }}>{m.content}</div></div>
+            : <div key={i} style={{ display: "flex", gap: 8, marginBottom: 12 }}><SwamiMini size={22} /><div style={{ background: T.bg, border: `1px solid ${T.orange}33`, borderRadius: "12px 12px 12px 2px", padding: "10px 12px", fontSize: 12.5, color: T.soft, lineHeight: 1.6, whiteSpace: "pre-wrap", maxWidth: "90%", fontFamily: "'JetBrains Mono', monospace" }}>{m.content}</div></div>)}
+          {loading && <div style={{ display: "flex", gap: 8, alignItems: "center", color: T.orange, fontSize: 12 }}><SwamiMini size={20} /> reading the room…</div>}
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>{LIVE_CHIPS.map((c, i) => chip(() => sendLive(c), c, i))}</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") sendLive(); }} placeholder="What did the prospect just say?" style={inputStyle} />
+          <button onClick={() => sendLive()} disabled={loading || !input.trim()} style={{ background: loading ? T.dim : `linear-gradient(135deg, ${T.orange}, ${T.purple})`, border: "none", borderRadius: 10, padding: "10px 18px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: loading ? "wait" : "pointer", opacity: !input.trim() ? .5 : 1, whiteSpace: "nowrap" }}>Coach me</button>
+          {chat.length > 0 && <button onClick={() => { setChat([]); setErr(""); }} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 10, padding: "10px 14px", color: T.muted, fontSize: 12, cursor: "pointer" }}>Reset</button>}
+        </div>
+      </div>}
+
+      {/* ── OBJECTION ── */}
+      {mode === "objection" && <div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>{OBJECTION_CHIPS.map((c, i) => chip(() => runObjection(c), c, i))}</div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          <input value={objText} onChange={e => setObjText(e.target.value)} onKeyDown={e => { if (e.key === "Enter") runObjection(); }} placeholder="Type the objection you just heard…" style={inputStyle} />
+          <button onClick={() => runObjection()} disabled={loading || !objText.trim()} style={{ background: loading ? T.dim : `linear-gradient(135deg, ${T.orange}, ${T.purple})`, border: "none", borderRadius: 10, padding: "10px 18px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: loading ? "wait" : "pointer", opacity: !objText.trim() ? .5 : 1, whiteSpace: "nowrap" }}>{loading ? "…" : "Handle it"}</button>
+        </div>
+        {objReply && <div style={{ background: T.card, border: `1px solid ${T.orange}33`, borderRadius: 12, padding: mob ? 14 : 16, fontSize: 12.5, color: T.soft, lineHeight: 1.7, whiteSpace: "pre-wrap", fontFamily: "'JetBrains Mono', monospace" }}>{objReply}</div>}
+      </div>}
+
+      {/* ── DEBRIEF ── */}
+      {mode === "debrief" && <div>
+        <label style={labelStyle}>Paste call transcript or notes (from Granola, Zoom, Otter, or your own)</label>
+        <textarea value={transcript} onChange={e => setTranscript(e.target.value)} rows={7} placeholder="Paste the transcript here…" style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit", lineHeight: 1.5 }} />
+        <button onClick={runDebrief} disabled={loading || !transcript.trim()} style={{ marginTop: 12, background: loading ? T.dim : `linear-gradient(135deg, ${T.orange}, ${T.purple})`, border: "none", borderRadius: 10, padding: "11px 20px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: loading ? "wait" : "pointer", opacity: !transcript.trim() ? .5 : 1 }}>{loading ? "🔮 Debriefing…" : "🔮 Debrief this call"}</button>
+
+        {debriefText && <div style={{ marginTop: 14, background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: 16, fontSize: 12.5, color: T.soft, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{debriefText}</div>}
+
+        {debrief && <div style={{ marginTop: 14 }}>
+          <div style={{ background: T.card, border: `1px solid ${T.orange}33`, borderRadius: 12, padding: mob ? 14 : 16, marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, color: T.orange, marginBottom: 6 }}>HOW FAR IT GOT</div>
+            <div style={{ fontSize: 13, color: T.text, fontWeight: 600 }}>{debrief.reached}</div>
+          </div>
+          {Array.isArray(debrief.scorecard) && <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "1fr 1fr", gap: 8, marginBottom: 12 }}>
+            {debrief.scorecard.map((s, i) => <div key={i} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 10, padding: 12, borderLeft: `3px solid ${gradeCol(s.grade)}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}><span style={{ fontSize: 12, fontWeight: 700, color: T.text }}>{s.area}</span><span style={{ fontSize: 10, fontWeight: 800, color: gradeCol(s.grade), background: gradeCol(s.grade) + "18", padding: "2px 8px", borderRadius: 4 }}>{String(s.grade || "").toUpperCase()}</span></div>
+              <div style={{ fontSize: 11.5, color: T.muted, lineHeight: 1.5 }}>{s.note}</div>
+            </div>)}
+          </div>}
+          {Array.isArray(debrief.missed) && debrief.missed.length > 0 && <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: 14, marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, color: T.red, marginBottom: 8 }}>⚠️ MISSED NEPQ MOMENTS</div>
+            {debrief.missed.map((m, i) => <div key={i} style={{ display: "flex", gap: 8, fontSize: 12, color: T.soft, lineHeight: 1.6, marginBottom: 6 }}><span style={{ color: T.red }}>✗</span><span>{m}</span></div>)}
+          </div>}
+          <div style={{ background: T.green + "0e", border: `1px solid ${T.green}33`, borderRadius: 12, padding: 14, marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, color: T.green, marginBottom: 6 }}>🎯 NEXT MOVE</div>
+            <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>{debrief.nextMove}</div>
+          </div>
+          {debrief.followUp && <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}><div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, color: T.blue }}>✉️ SUGGESTED FOLLOW-UP</div><CopyBtn text={debrief.followUp} label="Copy" /></div>
+            <div style={{ fontSize: 12.5, color: T.soft, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{debrief.followUp}</div>
+          </div>}
+        </div>}
+      </div>}
+
+      <div style={{ fontSize: 10.5, color: T.dim, marginTop: 20, lineHeight: 1.7, textAlign: "center", maxWidth: 640, margin: "20px auto 0" }}>Coaching guidance is AI-generated from the NEPQ framework — your judgment on the call wins. Live audio from Zoom/Granola isn't read automatically here; paste a transcript into Debrief, or ask to wire a real Granola/Zoom integration.</div>
+    </div>
+  );
+}
+
 /* ══ MAIN APP ══════════════════════════════════════════════════ */
 export default function App() {
   const mob = useIsMobile();
@@ -537,7 +700,7 @@ export default function App() {
     } catch (e) { setAskAns("Error: " + e.message); } finally { setAskLd(false); }
   }, [askQ, askLd]);
 
-  const tabs = [{ k: "home", l: "🔮 Home" }, { k: "top5", l: "🔥 Top 5" }, { k: "h2h", l: "⚔️ H2H" }, { k: "ask", l: "💬 Ask" }, { k: "all", l: "📋 All" }, { k: "sdr", l: "📈 SDR" }];
+  const tabs = [{ k: "home", l: "🔮 Home" }, { k: "top5", l: "🔥 Top 5" }, { k: "h2h", l: "⚔️ H2H" }, { k: "ask", l: "💬 Ask" }, { k: "all", l: "📋 All" }, { k: "sdr", l: "📈 SDR" }, { k: "coach", l: "🎧 Coach" }];
   const allM = [...POLY.map(m => ({ ...m, _p: "poly" })), ...KALSHI.map(m => ({ ...m, _p: "kalshi" }))];
   const pad = mob ? "0 16px" : "0";
 
@@ -735,6 +898,9 @@ export default function App() {
 
         {/* ═══════════ SDR ═══════════ */}
         {tab === "sdr" && <SDRTab mob={mob} />}
+
+        {/* ═══════════ COACH ═══════════ */}
+        {tab === "coach" && <CoachTab mob={mob} />}
       </div>
 
       {/* Detail Modal / Sheet */}
