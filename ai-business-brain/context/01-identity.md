@@ -1,5 +1,13 @@
 # Identity
 
+> **Scope (set 2026-09-02):** This brain belongs to an **independent practice owned by the operator** —
+> a separate concern from their employed role as a sales executive at Synadia (NATS.io consulting).
+> Do not use Synadia customer stories, internal metrics, deal data, or brand assets as proof here.
+> Domain expertise the operator carries personally is fair game; the employer's assets are not.
+> See `context/06-constraints.md` for the separation rules.
+>
+> Everything below is still a template. Do not treat bracketed lines as fact.
+
 ## Business name
 [NAME]
 

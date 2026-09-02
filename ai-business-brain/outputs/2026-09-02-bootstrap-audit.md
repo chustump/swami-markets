@@ -81,3 +81,17 @@ Per `CLAUDE.md`:
 - **What I believe:** The kit's structure is sound and needs no edits. The binding constraint is input, not tooling. Filling `/context` honestly for 90 minutes is worth more than any further work on this repo.
 - **What I'm missing:** Answers to all 10 questions above, starting with #1. Any real writing samples. Any transcript.
 - **Cheapest test:** Answer questions 1–4 in rough, ugly form — bullet points, not prose — then drop three real artifacts into `/inbox` and re-run this bootstrap. Roughly one hour, and it converts this repo from scaffolding into something with a point of view.
+
+---
+
+# Addendum — question 1 answered (same session)
+
+**Answer: an independent practice owned by the operator**, separate from the Synadia (NATS.io) sales role.
+
+Recorded in the files, not just here:
+- `context/01-identity.md` — scope header naming the practice as independent, with a warning that the rest is still template.
+- `context/06-constraints.md` — new **Separation from employment** section: no employer proof, logos, customer names, revenue figures, or channels; personal domain expertise travels with the operator, employer assets do not; conflict-of-interest items get flagged to the operator rather than resolved by the brain; confirm outside-work and IP terms before the first public page.
+
+**Still blocked on questions 2–10.** Answering #1 fixed the frame, not the content. No identity, customer, voice sample, framework, or proof has entered the repo, so §3 and §4 above stand unchanged: no context rewrites, no workshop proposal.
+
+**Next action (Day 1, ~90 minutes):** answer questions 2–4 in rough bullets, drop three real artifacts into `/inbox`, then re-run `prompts/00-bootstrap.md`. That run will be able to do the work this one correctly refused.
