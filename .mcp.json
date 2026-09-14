@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "grok": {
+      "command": "node",
+      "args": ["mcp/grok-stdio.mjs"],
+      "env": {
+        "XAI_API_KEY": "${XAI_API_KEY:-}",
+        "XAI_MODEL": "${XAI_MODEL:-grok-4.6}"
+      }
+    }
+  }
+}
