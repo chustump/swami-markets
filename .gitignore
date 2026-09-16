@@ -9,3 +9,7 @@ build/
 .env.production.local
 *.log
 .DS_Store
+
+# SEO audit outputs (from .claude/skills/audit)
+audit-report.md
+audit-report.html
