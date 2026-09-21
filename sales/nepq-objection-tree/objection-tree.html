@@ -1,0 +1,1749 @@
+<title>Objection Navigator</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap">
+<style>
+  :root {
+    --ground: #eef1f3;
+    --surface: #ffffff;
+    --surface-2: #e4e9ec;
+    --ink: #131a1e;
+    --ink-2: #4a585f;
+    --ink-3: #75858d;
+    --line: #cfd8dd;
+    --line-strong: #aebac1;
+    --accent: #0d6e69;
+    --accent-ink: #ffffff;
+    --accent-soft: #d8ebe8;
+    --warn: #9a5516;
+    --warn-soft: #f6e6d5;
+    --stop: #8c3630;
+    --stop-soft: #f6dedb;
+    --shadow: 0 1px 2px rgba(19, 26, 30, .07), 0 8px 24px -16px rgba(19, 26, 30, .3);
+    --radius: 6px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0e1417;
+      --surface: #161e22;
+      --surface-2: #1f292e;
+      --ink: #e8eef0;
+      --ink-2: #a7b6bd;
+      --ink-3: #7b8b93;
+      --line: #2a363c;
+      --line-strong: #3c4a51;
+      --accent: #4fbdb0;
+      --accent-ink: #07211f;
+      --accent-soft: #132f2d;
+      --warn: #d69a5c;
+      --warn-soft: #2e2317;
+      --stop: #e08279;
+      --stop-soft: #331d1b;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 26px -18px rgba(0, 0, 0, .9);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0e1417;
+    --surface: #161e22;
+    --surface-2: #1f292e;
+    --ink: #e8eef0;
+    --ink-2: #a7b6bd;
+    --ink-3: #7b8b93;
+    --line: #2a363c;
+    --line-strong: #3c4a51;
+    --accent: #4fbdb0;
+    --accent-ink: #07211f;
+    --accent-soft: #132f2d;
+    --warn: #d69a5c;
+    --warn-soft: #2e2317;
+    --stop: #e08279;
+    --stop-soft: #331d1b;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 26px -18px rgba(0, 0, 0, .9);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 20px 56px;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .masthead h1 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .masthead .sub {
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+  .masthead .spacer { flex: 1 1 auto; }
+  .method {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  /* ---------- stage rail ---------- */
+  .stages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 18px 0 20px;
+  }
+  .stage {
+    flex: 1 1 140px;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    opacity: .55;
+    transition: opacity .18s ease, border-color .18s ease;
+  }
+  .stage.on {
+    opacity: 1;
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  .stage.done { opacity: .85; }
+  .stage .n {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+  .stage .t {
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .stage .p {
+    font-size: 12px;
+    color: var(--ink-2);
+    line-height: 1.35;
+    margin-top: 2px;
+  }
+
+  /* ---------- layout ---------- */
+  .cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .cols { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  /* ---------- trunk picker ---------- */
+  .picker-intro {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 19px;
+    line-height: 1.45;
+    margin: 0 0 16px;
+    max-width: 62ch;
+    text-wrap: balance;
+  }
+  .trunks {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 8px;
+  }
+  .trunk {
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px 13px;
+    cursor: pointer;
+    display: grid;
+    gap: 4px;
+    transition: border-color .15s ease, transform .15s ease;
+  }
+  .trunk:hover { border-color: var(--accent); }
+  .trunk:active { transform: translateY(1px); }
+  .trunk .id {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+  .trunk .lbl {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 17px;
+    line-height: 1.25;
+  }
+  .trunk .means {
+    font-size: 12px;
+    color: var(--ink-2);
+    line-height: 1.4;
+  }
+
+  /* ---------- node card ---------- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
+  }
+  .nid {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .chip {
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .chip.tone {
+    background: transparent;
+    color: var(--ink-2);
+    border: 1px solid var(--line-strong);
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .chip.stop { background: var(--stop-soft); color: var(--stop); }
+
+  .say {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 23px;
+    line-height: 1.42;
+    margin: 0;
+    padding: 20px 16px 18px;
+    max-width: 52ch;
+    text-wrap: pretty;
+  }
+  @media (max-width: 520px) { .say { font-size: 20px; } }
+  .say .stage-dir { color: var(--ink-3); font-style: italic; }
+
+  .listen {
+    padding: 0 16px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .listen .k {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-right: 2px;
+  }
+  .listen span.v {
+    font-size: 12.5px;
+    color: var(--ink-2);
+    border: 1px dashed var(--line-strong);
+    border-radius: 3px;
+    padding: 2px 7px;
+  }
+
+  .branches {
+    border-top: 1px solid var(--line);
+    padding: 12px 16px 16px;
+    display: grid;
+    gap: 7px;
+  }
+  .branches .k {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .branch {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .branch:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .branch .key {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-3);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    text-align: center;
+    line-height: 18px;
+  }
+  .branch .to {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+  @media (max-width: 520px) {
+    .branch { grid-template-columns: 22px minmax(0, 1fr); }
+    .branch .to { grid-column: 2; }
+  }
+
+  .terminal {
+    padding: 0 16px 18px;
+    display: grid;
+    gap: 10px;
+  }
+  .terminal .log {
+    font-size: 13px;
+    color: var(--ink-2);
+    border-left: 2px solid var(--accent);
+    padding-left: 11px;
+  }
+  .terminal .note {
+    font-size: 13px;
+    color: var(--ink-2);
+    font-style: italic;
+  }
+
+  .trunkmeta {
+    padding: 0 16px 16px;
+    display: grid;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .trunkmeta b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- controls ---------- */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 14px;
+  }
+  button.btn {
+    font: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  button.btn:hover { border-color: var(--accent); }
+  button.btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 500;
+  }
+  button.btn.danger { color: var(--stop); border-color: var(--stop); }
+  button.btn:disabled { opacity: .4; cursor: default; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- side rail ---------- */
+  .rail { display: grid; gap: 14px; }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px 13px;
+  }
+  .panel h2 {
+    margin: 0 0 8px;
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 600;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  .path { display: grid; gap: 3px; }
+  .path .step {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    color: var(--ink-2);
+  }
+  .path .step.cur { color: var(--ink); font-weight: 500; }
+  .path .step .dot { color: var(--ink-3); }
+  .path .empty { font-family: inherit; font-size: 13px; color: var(--ink-3); }
+
+  textarea#notes {
+    width: 100%;
+    min-height: 92px;
+    resize: vertical;
+    font: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--ground);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 8px 9px;
+  }
+
+  ul.rules { margin: 0; padding-left: 16px; display: grid; gap: 5px; }
+  ul.rules li { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
+  ul.rules li b { color: var(--ink); font-weight: 600; }
+
+  details.guard summary {
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 600;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  details.guard ul { margin: 8px 0 0; }
+
+  .copybox {
+    width: 100%;
+    min-height: 120px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    color: var(--ink);
+    background: var(--ground);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 8px 9px;
+    margin-top: 8px;
+  }
+  .toast {
+    font-size: 12.5px;
+    color: var(--accent);
+    margin-top: 8px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Objection Navigator</h1>
+    <span class="sub">Synadia &middot; NATS</span>
+    <span class="spacer"></span>
+    <span class="method">NEPQ &middot; isolate &rarr; reframe &rarr; cost &rarr; commit</span>
+  </header>
+
+  <div class="stages" id="stages"></div>
+
+  <div class="cols">
+    <main>
+      <div id="main"></div>
+      <div class="controls" id="controls"></div>
+      <div id="copyarea"></div>
+    </main>
+
+    <aside class="rail">
+      <section class="panel">
+        <h2>Path</h2>
+        <div class="path" id="path"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Notes</h2>
+        <textarea id="notes" placeholder="What they actually said. Numbers. Names."></textarea>
+      </section>
+
+      <section class="panel">
+        <h2>Not a commitment</h2>
+        <ul class="rules" id="notcommit"></ul>
+      </section>
+
+      <section class="panel">
+        <details class="guard">
+          <summary>Guardrails</summary>
+          <ul class="rules" id="guardrails"></ul>
+        </details>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+const TREE = {
+  "meta": {
+    "name": "Synadia NEPQ Objection Tree",
+    "version": "1.0",
+    "owner": "Jeff Chu — Synadia",
+    "offer": "Synadia — the creators of NATS. The fabric that connects agents, devices, and services across cloud and edge. Products: Cloud, Platform, Deploy for Kubernetes, Insights, Protect.",
+    "method": "NEPQ (Jeremy Miner) — problem finding, not product pushing. The prospect persuades themselves.",
+    "positioning_source": "synadia.com + synadia.com/agentic-ai, verified 2026-08-27",
+    "rule": "One question at a time. Never two questions in one breath. Never answer an objection with a rebuttal — answer with a distinction or a question."
+  },
+
+  "stages": [
+    {
+      "id": "isolate",
+      "name": "Isolate",
+      "purpose": "Find out what the words actually mean before responding to them. Most objections are a label on something else.",
+      "tonality": "curious",
+      "rule": "Loop at least twice on a vague answer. 'Help me understand what you mean by that.' Never respond to the surface objection."
+    },
+    {
+      "id": "reframe",
+      "name": "Reframe",
+      "purpose": "Replace the frame the objection assumes with a distinction they have to think about. Not a counter-argument.",
+      "tonality": "curious, then confused",
+      "rule": "A reframe ends in a question mark more often than a period. If you talked for more than 20 seconds, you presented."
+    },
+    {
+      "id": "cost",
+      "name": "Attach cost",
+      "purpose": "Make the cost of doing nothing concrete, in their numbers, in their words.",
+      "tonality": "concerned — sigh, pause, lower the pitch",
+      "rule": "You never say the number. They say the number. If you say it, they defend against it."
+    },
+    {
+      "id": "commit",
+      "name": "Commit",
+      "purpose": "Get a dated, named next step with a person attached. Nothing else counts.",
+      "tonality": "matter-of-fact, low pressure",
+      "rule": "'I need to', 'we'll take a look', and 'send me something' are not commitments. Route to STALL."
+    }
+  ],
+
+  "not_a_commitment": [
+    "I need to look at it",
+    "I need to run it by the team",
+    "Send me some information",
+    "Let's circle back next quarter",
+    "We'll keep you in mind",
+    "This is interesting",
+    "Put something together and I'll review it"
+  ],
+
+  "objections": [
+    {
+      "id": "OBJ-KAFKA",
+      "label": "We already have Kafka",
+      "sounds_like": ["We're a Kafka shop", "We're on Confluent", "This is solved for us", "We standardized on Kafka two years ago"],
+      "usually_means": "Either genuine coverage (analytics), or sunk cost, or they have never separated 'durable log' from 'connectivity layer' in their own heads.",
+      "nodes": [
+        {
+          "id": "OBJ-KAFKA.1",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "Makes sense, most teams your size do. Where is Kafka doing the work today — is it mostly the analytics pipeline and the event log, or is it also carrying traffic between services and out to whatever sits outside the data center?",
+          "listen_for": ["analytics / log only", "also service-to-service", "also edge, devices, vehicles, plants"],
+          "branches": [
+            { "if": "Analytics and the event log only", "then": "OBJ-KAFKA.2a" },
+            { "if": "Also service-to-service traffic", "then": "OBJ-KAFKA.2b" },
+            { "if": "Also edge, devices, or anything outside the data center", "then": "OBJ-KAFKA.2c" },
+            { "if": "Vague — 'it does everything'", "then": "OBJ-KAFKA.1b" }
+          ]
+        },
+        {
+          "id": "OBJ-KAFKA.1b",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "Help me understand what everything covers. When one service needs an answer back from another one — not an event, an answer — does that go through Kafka too, or does that go over HTTP?",
+          "listen_for": ["HTTP / gRPC for request-reply", "admits a second and third system", "doesn't know"],
+          "branches": [
+            { "if": "They name a second system (HTTP, gRPC, Redis, a mesh)", "then": "OBJ-KAFKA.2b" },
+            { "if": "They don't know", "then": "OBJ-AUTH.1" }
+          ]
+        },
+        {
+          "id": "OBJ-KAFKA.2a",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "Then we're probably not replacing anything. Kafka is a good log, and where it's doing analytics it should stay. What I'd want to understand is what's carrying the rest — request and reply, key-value, and the traffic that has to leave the data center. In most estates that's three or four separate things nobody owns end to end. What does that look like for you?",
+          "listen_for": ["names 3+ systems", "admits nobody owns it", "'it's fine'"],
+          "branches": [
+            { "if": "They name several systems", "then": "OBJ-KAFKA.3" },
+            { "if": "'It's fine, it works'", "then": "OBJ-KAFKA.2d" }
+          ]
+        },
+        {
+          "id": "OBJ-KAFKA.2b",
+          "stage": "reframe",
+          "tonality": "confused",
+          "say": "Help me understand the shape of that. When two services need to exchange a message today, how many moving pieces are between them — gateway, proxy, load balancer, mesh, plus the broker?",
+          "listen_for": ["a count", "a sigh", "'more than I'd like'"],
+          "branches": [
+            { "if": "They count three or more", "then": "OBJ-KAFKA.3" },
+            { "if": "They defend the architecture", "then": "OBJ-KAFKA.2d" }
+          ]
+        },
+        {
+          "id": "OBJ-KAFKA.2c",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "That's the interesting part. Kafka assumes the data center. When one of those sites loses its uplink for an hour — does the local logic keep making decisions, or does it queue and wait for the cloud to come back?",
+          "listen_for": ["queues and waits", "'we built something custom'", "'that's a known gap'"],
+          "branches": [
+            { "if": "Queues, waits, or a custom thing someone maintains", "then": "OBJ-KAFKA.3" },
+            { "if": "'We built our own'", "then": "OBJ-KAFKA.2e" }
+          ]
+        },
+        {
+          "id": "OBJ-KAFKA.2d",
+          "stage": "reframe",
+          "tonality": "confused",
+          "say": "Fair. I'm not trying to talk you out of something that works. I'm curious about one thing though — if the number of services and agents on that fabric doubled next year, which of those pieces would you be least comfortable doubling?",
+          "listen_for": ["names the weak link", "'the ops load'", "'cost'"],
+          "branches": [
+            { "if": "They name a weak link", "then": "OBJ-KAFKA.3" },
+            { "if": "'Nothing, we're good'", "then": "CLOSE.3" }
+          ]
+        },
+        {
+          "id": "OBJ-KAFKA.2e",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "Who maintains that? And what happens to the edge roadmap the quarter that person is on something else?",
+          "listen_for": ["one named person", "a small team", "nervous laugh"],
+          "branches": [
+            { "if": "One person or a nervous laugh", "then": "OBJ-KAFKA.3" }
+          ]
+        },
+        {
+          "id": "OBJ-KAFKA.3",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "(pause) So if none of that changes for the next twelve months, and the agent and edge side of the business grows the way you just described — what breaks first? Cost, latency, or the team operating it?",
+          "listen_for": ["they pick one", "they name a number", "they name a person who will quit"],
+          "branches": [
+            { "if": "They pick one and explain", "then": "OBJ-KAFKA.4" },
+            { "if": "'We'd hire'", "then": "OBJ-KAFKA.3b" }
+          ]
+        },
+        {
+          "id": "OBJ-KAFKA.3b",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "What does a platform engineer who can operate that stack cost you fully loaded — and how long did the last one take to hire?",
+          "listen_for": ["a salary number", "a months-to-hire number"],
+          "branches": [
+            { "if": "They give numbers", "then": "OBJ-KAFKA.4" }
+          ]
+        },
+        {
+          "id": "OBJ-KAFKA.4",
+          "stage": "commit",
+          "tonality": "matter-of-fact",
+          "say": "Here's what I'd suggest. There's a six-row comparison we use — cloud-centric patterns on the left, what distributed actually needs on the right. Thirty minutes with you and whoever owns the platform, we walk the left column, and you tell me which rows hurt. If none of them do, I'll say so and we're done. Who else would need to be in that?",
+          "listen_for": ["a name", "a date", "'just me'"],
+          "branches": [
+            { "if": "Name and a date", "then": "CLOSE.1" },
+            { "if": "'Send me the comparison'", "then": "STALL.1" },
+            { "if": "'I'd need to check with…'", "then": "OBJ-AUTH.1" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "OBJ-MANAGED",
+      "label": "We're standardized on our cloud's services",
+      "sounds_like": ["We use Kinesis", "We're all-in on GCP Pub/Sub", "Service Bus is our standard", "EventBridge handles this"],
+      "usually_means": "True and fine inside one cloud. The objection dies the moment the estate is genuinely multi-provider or leaves the region.",
+      "nodes": [
+        {
+          "id": "OBJ-MANAGED.1",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "That's a reasonable place to be. Is everything that needs to talk to everything else inside that one account — or are there already pieces on another provider, on-prem, or on hardware you own?",
+          "listen_for": ["single cloud", "already multi-cloud", "on-prem or devices", "'a little of both'"],
+          "branches": [
+            { "if": "Genuinely one cloud, nothing outside", "then": "OBJ-MANAGED.2a" },
+            { "if": "Already multi-provider", "then": "OBJ-MANAGED.2b" },
+            { "if": "Hardware, plants, vehicles, or on-prem", "then": "OBJ-MANAGED.2c" }
+          ]
+        },
+        {
+          "id": "OBJ-MANAGED.2a",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "Then for today it fits. The thing I'd want to test is the AI side. Are your agents all on one model provider, or are you already mixing vendors and runtimes?",
+          "listen_for": ["already mixing", "planning to", "'one for now'"],
+          "branches": [
+            { "if": "Mixing or planning to", "then": "OBJ-MANAGED.2b" },
+            { "if": "One provider, no plans", "then": "OBJ-AGENTIC.1" }
+          ]
+        },
+        {
+          "id": "OBJ-MANAGED.2b",
+          "stage": "reframe",
+          "tonality": "confused",
+          "say": "Here's what I don't understand about the standard approach. No cloud vendor's messaging service will coordinate across its competitors' runtimes — that's not a gap, that's their business model. So when an agent on one side hands work to an agent on the other, where does that state live today, and what happens if the receiver is down when it arrives?",
+          "listen_for": ["'we stitch it at the API layer'", "'good question'", "a custom bridge"],
+          "branches": [
+            { "if": "API-layer stitching or a custom bridge", "then": "OBJ-MANAGED.3" },
+            { "if": "'It just fails and retries'", "then": "OBJ-MANAGED.3" }
+          ]
+        },
+        {
+          "id": "OBJ-MANAGED.2c",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "So the managed service covers the cloud half. What covers the half that isn't in the cloud — and is that the same identity model and the same security posture, or a second one?",
+          "listen_for": ["a second stack", "'different team owns it'", "VPN and perimeter"],
+          "branches": [
+            { "if": "Second stack or second team", "then": "OBJ-MANAGED.3" }
+          ]
+        },
+        {
+          "id": "OBJ-MANAGED.3",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "(pause) How much engineering time went into that seam last quarter — the bridging, the retries, the on-call when it didn't reconcile? Roughly.",
+          "listen_for": ["weeks", "an incident", "'don't get me started'"],
+          "branches": [
+            { "if": "They quantify it or tell an incident story", "then": "OBJ-MANAGED.4" },
+            { "if": "Deflects", "then": "OBJ-MANAGED.3b" }
+          ]
+        },
+        {
+          "id": "OBJ-MANAGED.3b",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "When was the last incident that traced back to that seam, and who was on the call at 2am?",
+          "listen_for": ["a name", "a recent date"],
+          "branches": [
+            { "if": "They tell the story", "then": "OBJ-MANAGED.4" }
+          ]
+        },
+        {
+          "id": "OBJ-MANAGED.4",
+          "stage": "commit",
+          "tonality": "matter-of-fact",
+          "say": "Replit and Browserbase both hit that exact seam and ended up putting one fabric underneath instead of stitching at the API layer. Would it be worth twenty minutes with your architect to compare how they structured it against what you've got? I'll come with the diagram, not a deck.",
+          "listen_for": ["a name", "a date"],
+          "branches": [
+            { "if": "Yes with a name", "then": "CLOSE.1" },
+            { "if": "'Send the write-up'", "then": "STALL.1" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "OBJ-BROKER",
+      "label": "Isn't this just another message broker?",
+      "sounds_like": ["We already have RabbitMQ", "We use gRPC and a service mesh", "How is this different from what we have", "Another queue"],
+      "usually_means": "They are comparing broker to broker. The whole deal depends on moving the comparison to fabric versus stack-of-workarounds.",
+      "nodes": [
+        {
+          "id": "OBJ-BROKER.1",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "Good question, and if it were, you shouldn't buy it. Let me ask it back at you: today, when you stand up a new service or agent, what does it have to do to find the things it needs to talk to?",
+          "listen_for": ["DNS + service registry", "config change", "'we register it in…'", "a ticket to another team"],
+          "branches": [
+            { "if": "DNS, registry, config, or a ticket", "then": "OBJ-BROKER.2a" },
+            { "if": "'It just works'", "then": "OBJ-BROKER.1b" }
+          ]
+        },
+        {
+          "id": "OBJ-BROKER.1b",
+          "stage": "isolate",
+          "tonality": "confused",
+          "say": "Walk me through the last one you added. Between writing the code and it talking to production, how many systems did someone have to touch — DNS, certs, firewall, gateway config?",
+          "listen_for": ["a list", "days or weeks", "another team involved"],
+          "branches": [
+            { "if": "A list, or another team", "then": "OBJ-BROKER.2a" }
+          ]
+        },
+        {
+          "id": "OBJ-BROKER.2a",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "That's the distinction. A broker moves bytes between endpoints you configured. What we're talking about is addressing, discovery, identity, state, and security in one protocol — you address a subject, not an endpoint, so a thing can talk to a thing without knowing where it lives, how many instances exist, or whether it's online yet. The comparison isn't broker to broker. It's one fabric against the four systems you just listed. Which of those four is the one that slows you down most?",
+          "listen_for": ["they name one", "'all of them'", "pushback"],
+          "branches": [
+            { "if": "They name one", "then": "OBJ-BROKER.3" },
+            { "if": "Pushback: 'the mesh handles that'", "then": "OBJ-BROKER.2b" }
+          ]
+        },
+        {
+          "id": "OBJ-BROKER.2b",
+          "stage": "reframe",
+          "tonality": "confused",
+          "say": "Inside the cluster, sure. What does the mesh do for the workload on a vehicle, or on a plant floor with an intermittent link? Same identity model, or a different one?",
+          "listen_for": ["'different'", "'we don't have that yet'", "silence"],
+          "branches": [
+            { "if": "Different, or they don't have it", "then": "OBJ-BROKER.3" },
+            { "if": "'We have no edge'", "then": "OBJ-AGENTIC.1" }
+          ]
+        },
+        {
+          "id": "OBJ-BROKER.3",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "(pause) What does that cost you in calendar time? From a developer saying 'I need these two things to talk' to it actually running in production — what's the honest number?",
+          "listen_for": ["days", "weeks", "'depends on the queue'"],
+          "branches": [
+            { "if": "Days or weeks", "then": "OBJ-BROKER.4" }
+          ]
+        },
+        {
+          "id": "OBJ-BROKER.4",
+          "stage": "commit",
+          "tonality": "matter-of-fact",
+          "say": "The fastest way to settle this isn't me arguing. It's one of your engineers putting a leaf node next to what's already there and wiring one subject tree — the same 20MB binary runs in the cloud and on a device. Who on your side would find that interesting enough to spend an afternoon on?",
+          "listen_for": ["an engineer's name", "'I'd do it'"],
+          "branches": [
+            { "if": "A name", "then": "CLOSE.2" },
+            { "if": "'Maybe later'", "then": "STALL.1" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "OBJ-OSS",
+      "label": "NATS is open source and free — why would we pay you?",
+      "sounds_like": ["We already run NATS ourselves", "We'll self-host", "What am I actually buying"],
+      "usually_means": "Often the strongest deal in the pipeline. They already believe in the technology. The only question is whether operating it is where their team's time should go.",
+      "nodes": [
+        {
+          "id": "OBJ-OSS.1",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "Nothing to argue with there — NATS stays free and we'll help either way. Who operates it for you today?",
+          "listen_for": ["one named person", "a platform team", "'nobody really'"],
+          "branches": [
+            { "if": "One person", "then": "OBJ-OSS.2a" },
+            { "if": "A platform team", "then": "OBJ-OSS.2b" },
+            { "if": "'Nobody owns it'", "then": "OBJ-OSS.2c" }
+          ]
+        },
+        {
+          "id": "OBJ-OSS.2a",
+          "stage": "reframe",
+          "tonality": "concerned",
+          "say": "So it's a bus-number-one situation. What happens to the roadmap the week that person is out — and what's the last thing they had to drop to go deal with the messaging layer?",
+          "listen_for": ["an incident", "a dropped project", "'yeah, we've talked about that'"],
+          "branches": [
+            { "if": "They tell the story", "then": "OBJ-OSS.3" }
+          ]
+        },
+        {
+          "id": "OBJ-OSS.2b",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "Roughly what share of that team's week goes to operating the messaging layer versus building on top of it?",
+          "listen_for": ["a percentage", "'more than it should'"],
+          "branches": [
+            { "if": "Any number above 'almost none'", "then": "OBJ-OSS.3" },
+            { "if": "'Almost none'", "then": "OBJ-OSS.2d" }
+          ]
+        },
+        {
+          "id": "OBJ-OSS.2c",
+          "stage": "reframe",
+          "tonality": "confused",
+          "say": "So when it's 2am and a consumer is falling behind, who gets paged — and how do they see what's happening inside the system right now?",
+          "listen_for": ["'we look at dashboards'", "'we don't really'", "an ugly post-mortem"],
+          "branches": [
+            { "if": "Limited visibility or a bad post-mortem", "then": "OBJ-OSS.3" }
+          ]
+        },
+        {
+          "id": "OBJ-OSS.2d",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "Then the operating cost isn't the argument. The two things that tend to matter at your stage are seeing inside the system when it misbehaves, and proving to a security reviewer that policy is enforced on every connection. Which of those two is closer to being a problem for you?",
+          "listen_for": ["observability", "security review", "neither"],
+          "branches": [
+            { "if": "Observability", "then": "OBJ-OSS.3" },
+            { "if": "Security or audit", "then": "OBJ-OSS.3" },
+            { "if": "Neither, genuinely", "then": "CLOSE.3" }
+          ]
+        },
+        {
+          "id": "OBJ-OSS.3",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "(pause) Put a number on the last incident — the one that traced back to the messaging layer. How many engineer-hours went into it, and what didn't ship that sprint because of it?",
+          "listen_for": ["hours", "a slipped feature", "an exec who noticed"],
+          "branches": [
+            { "if": "Any real number", "then": "OBJ-OSS.4" },
+            { "if": "'We've been lucky'", "then": "OBJ-OSS.3b" }
+          ]
+        },
+        {
+          "id": "OBJ-OSS.3b",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "How long do you want to keep relying on that? If the estate doubles next year, does luck scale with it?",
+          "listen_for": ["a laugh, then honesty"],
+          "branches": [
+            { "if": "Honest answer", "then": "OBJ-OSS.4" }
+          ]
+        },
+        {
+          "id": "OBJ-OSS.4",
+          "stage": "commit",
+          "tonality": "matter-of-fact",
+          "say": "Then here's a concrete next step that costs you nothing to say yes to. We run a set of expert-tuned checks against a NATS system and hand back a graded read on what's actually going on inside yours — connections, slow consumers, streams, the lot. If it comes back clean, that's a good day for you. If it doesn't, you'd want to know. Can we get that scheduled for the week of the [date]?",
+          "listen_for": ["a date", "'who needs to approve that'"],
+          "branches": [
+            { "if": "A date", "then": "CLOSE.1" },
+            { "if": "Approval needed", "then": "OBJ-AUTH.1" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "OBJ-AGENTIC",
+      "label": "Agentic AI isn't a priority for us yet",
+      "sounds_like": ["We're not doing agents", "That's a 2027 conversation", "We're still figuring out AI strategy"],
+      "usually_means": "True today, often false in two quarters. Never argue with it — pivot to the pain that exists now and let the agent story arrive on its own.",
+      "nodes": [
+        {
+          "id": "OBJ-AGENTIC.1",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "Then don't buy it for that. Genuinely. What is on the list for the next two quarters on the platform side?",
+          "listen_for": ["edge or plants", "cost reduction", "a migration", "reliability"],
+          "branches": [
+            { "if": "Edge, plants, vehicles, devices", "then": "OBJ-AGENTIC.2a" },
+            { "if": "Cost or consolidation", "then": "OBJ-PRICE.2b" },
+            { "if": "Reliability or scaling", "then": "OBJ-AGENTIC.2b" },
+            { "if": "'Nothing, we're steady state'", "then": "CLOSE.3" }
+          ]
+        },
+        {
+          "id": "OBJ-AGENTIC.2a",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "That's the same fabric, and it's the part that pays for itself before any agent shows up. When one of those sites is disconnected for an hour, does the local logic keep deciding, or does everything wait for the cloud?",
+          "listen_for": ["waits", "custom buffering", "'known problem'"],
+          "branches": [
+            { "if": "Waits or custom", "then": "OBJ-AGENTIC.3" }
+          ]
+        },
+        {
+          "id": "OBJ-AGENTIC.2b",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "Then the useful question is what breaks first as you scale. When you double the number of services exchanging messages, what's the piece you'd least want to double — the broker cluster, the gateways, or the people operating them?",
+          "listen_for": ["they pick one"],
+          "branches": [
+            { "if": "They pick one", "then": "OBJ-AGENTIC.3" }
+          ]
+        },
+        {
+          "id": "OBJ-AGENTIC.3",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "(pause) Here's the part I'd be thinking about in your seat. Whenever the agent work does land — and in most places it lands faster than the plan says — it lands on whatever fabric you already have. What happens if the answer six months from now is 'we can't, the plumbing won't carry it'?",
+          "listen_for": ["'that'd be a problem'", "names an exec who'd ask", "a deadline"],
+          "branches": [
+            { "if": "They acknowledge the risk", "then": "OBJ-AGENTIC.4" },
+            { "if": "Flat 'not our problem'", "then": "CLOSE.3" }
+          ]
+        },
+        {
+          "id": "OBJ-AGENTIC.4",
+          "stage": "commit",
+          "tonality": "matter-of-fact",
+          "say": "Low-commitment idea then. We surveyed 500 practitioners on exactly this — how ready edge estates are for workloads that have to keep running disconnected. I'll send it over, and if any of it looks like your environment, we talk. If it doesn't, you've got a decent report. Fair?",
+          "listen_for": ["yes", "'send it'"],
+          "branches": [
+            { "if": "Yes", "then": "CLOSE.4" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "OBJ-REWRITE",
+      "label": "We'd have to rewrite everything",
+      "sounds_like": ["Too disruptive", "We can't do a big migration right now", "Our team doesn't have bandwidth for a re-platform"],
+      "usually_means": "They are picturing a big-bang cutover because that is what the last vendor asked for. Kill that picture immediately.",
+      "nodes": [
+        {
+          "id": "OBJ-REWRITE.1",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "That would be a terrible idea and I wouldn't propose it. When you picture it, what's the part that looks like a rewrite — the applications, the ops model, or the security setup?",
+          "listen_for": ["applications", "ops", "security", "'all of it'"],
+          "branches": [
+            { "if": "Applications", "then": "OBJ-REWRITE.2a" },
+            { "if": "Ops or deployment", "then": "OBJ-REWRITE.2b" },
+            { "if": "Security or compliance", "then": "OBJ-REWRITE.2c" }
+          ]
+        },
+        {
+          "id": "OBJ-REWRITE.2a",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "The migrations that work don't start with applications. They start with the one thing that's already painful — a leaf node next to the existing broker, one subject tree, one workload. Nothing else moves. If you had to name the single workload that hurts most right now, what would it be?",
+          "listen_for": ["names a workload", "'the edge sync'", "'the fan-out'"],
+          "branches": [
+            { "if": "Names a workload", "then": "OBJ-REWRITE.3" },
+            { "if": "Can't name one", "then": "CLOSE.3" }
+          ]
+        },
+        {
+          "id": "OBJ-REWRITE.2b",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "How do you deploy everything else — is it Kubernetes and GitOps?",
+          "listen_for": ["yes K8s", "VMs", "mixed"],
+          "branches": [
+            { "if": "Kubernetes", "then": "OBJ-REWRITE.2d" },
+            { "if": "Other", "then": "OBJ-REWRITE.3" }
+          ]
+        },
+        {
+          "id": "OBJ-REWRITE.2d",
+          "stage": "reframe",
+          "tonality": "matter-of-fact",
+          "say": "Then it deploys the way everything else in your estate deploys — self-serve, into your existing GitOps workflow. That's not a re-platform, that's another manifest. What would still worry you after that?",
+          "listen_for": ["a real residual concern", "nothing"],
+          "branches": [
+            { "if": "A residual concern", "then": "OBJ-REWRITE.3" },
+            { "if": "Nothing", "then": "OBJ-REWRITE.4" }
+          ]
+        },
+        {
+          "id": "OBJ-REWRITE.2c",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "Security is usually the opposite of a rewrite here — policy gets enforced on every connection and message, with audit events going to your SIEM, and the applications don't change. What does your security team need to see before something like that can go in?",
+          "listen_for": ["a review process", "a named architect", "SOC 2 / trust center"],
+          "branches": [
+            { "if": "Names a process or person", "then": "OBJ-AUTH.1" },
+            { "if": "Compliance artifacts", "then": "OBJ-REWRITE.3" }
+          ]
+        },
+        {
+          "id": "OBJ-REWRITE.3",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "(pause) Let's say the answer is 'not now' and that workload stays as it is through next year. What does that cost — in incidents, in the features it blocks, or in the people who keep it alive?",
+          "listen_for": ["a real cost", "a blocked initiative"],
+          "branches": [
+            { "if": "They name it", "then": "OBJ-REWRITE.4" }
+          ]
+        },
+        {
+          "id": "OBJ-REWRITE.4",
+          "stage": "commit",
+          "tonality": "matter-of-fact",
+          "say": "So the proposal is deliberately small: that one workload, alongside what's already running, nothing decommissioned. If it doesn't earn its place you turn it off and you've lost a sprint of one engineer's time. What would need to be true for you to green-light something that size?",
+          "listen_for": ["conditions", "a person", "a budget line"],
+          "branches": [
+            { "if": "Conditions they can meet", "then": "CLOSE.2" },
+            { "if": "'Approval from…'", "then": "OBJ-AUTH.1" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "OBJ-PRICE",
+      "label": "It's too expensive / no budget this year",
+      "sounds_like": ["That's more than we planned", "Budget's locked", "We'd need to find money"],
+      "usually_means": "Either the gap isn't built yet, or it is a real fiscal-calendar problem. Those are handled differently — isolate before you respond.",
+      "nodes": [
+        {
+          "id": "OBJ-PRICE.1",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "Appreciate you being straight about it. Is it that the number is more than the problem is worth to you — or that the money for this year is already committed somewhere else?",
+          "listen_for": ["value problem", "timing problem", "both"],
+          "branches": [
+            { "if": "More than it's worth", "then": "OBJ-PRICE.2a" },
+            { "if": "Timing / budget locked", "then": "OBJ-PRICE.2b" },
+            { "if": "Evasive", "then": "OBJ-PRICE.1b" }
+          ]
+        },
+        {
+          "id": "OBJ-PRICE.1b",
+          "stage": "isolate",
+          "tonality": "confused",
+          "say": "Help me understand — if the number were half of what it is, would you be moving forward this quarter?",
+          "listen_for": ["yes = price", "no = value or authority"],
+          "branches": [
+            { "if": "Yes", "then": "OBJ-PRICE.2b" },
+            { "if": "No", "then": "OBJ-PRICE.2a" }
+          ]
+        },
+        {
+          "id": "OBJ-PRICE.2a",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "Then I've done this backwards and that's on me — we shouldn't be talking about a number before we've agreed there's something worth fixing. Go back to what you told me about [their stated pain]. What's that costing today, all-in, including the headcount keeping it upright?",
+          "listen_for": ["a number they compute", "'I'd have to work it out'"],
+          "branches": [
+            { "if": "They compute it", "then": "OBJ-PRICE.3" },
+            { "if": "They can't", "then": "CLOSE.3" }
+          ]
+        },
+        {
+          "id": "OBJ-PRICE.2b",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "That's a real constraint, not an objection. Two questions then. When does the next budget cycle open — and is there an existing line item this would replace or reduce rather than add to?",
+          "listen_for": ["a fiscal date", "an existing contract", "a renewal date"],
+          "branches": [
+            { "if": "Existing contract or renewal", "then": "OBJ-PRICE.2c" },
+            { "if": "Only a future cycle", "then": "OBJ-PRICE.3" }
+          ]
+        },
+        {
+          "id": "OBJ-PRICE.2c",
+          "stage": "reframe",
+          "tonality": "matter-of-fact",
+          "say": "When does that one renew? Because the useful conversation is the one that happens eight weeks before that date, not after you've signed for another year.",
+          "listen_for": ["a renewal date"],
+          "branches": [
+            { "if": "A date", "then": "CLOSE.1" }
+          ]
+        },
+        {
+          "id": "OBJ-PRICE.3",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "(pause) So between now and then — that's [N] months of the same thing. What does that add up to, and who feels it most?",
+          "listen_for": ["a multiplied number", "a named team"],
+          "branches": [
+            { "if": "They do the math out loud", "then": "OBJ-PRICE.4" }
+          ]
+        },
+        {
+          "id": "OBJ-PRICE.4",
+          "stage": "commit",
+          "tonality": "matter-of-fact",
+          "say": "Then let's not chase budget you don't have. Two things: we put a date on the pre-renewal conversation now so it doesn't get lost, and in the meantime your team gets hands on it at no cost so the evaluation is already done when the money opens. Does that work?",
+          "listen_for": ["yes and a date"],
+          "branches": [
+            { "if": "Yes with a date", "then": "CLOSE.1" },
+            { "if": "Vague", "then": "STALL.1" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "OBJ-BURNED",
+      "label": "We tried something like this before and got burned",
+      "sounds_like": ["We had a bad experience with a vendor", "We evaluated NATS two years ago", "We've been through a migration like this"],
+      "usually_means": "A relationship wound, not a technology objection. Never defend the technology first — find out what 'burned' means and whether it was the tool, the vendor, or the rollout.",
+      "nodes": [
+        {
+          "id": "OBJ-BURNED.1",
+          "stage": "isolate",
+          "tonality": "concerned",
+          "say": "(pause) That's worth understanding before anything else. What happened?",
+          "listen_for": ["the story", "who was to blame", "how long ago"],
+          "branches": [
+            { "if": "Story given", "then": "OBJ-BURNED.1b" },
+            { "if": "Short, guarded answer", "then": "OBJ-BURNED.1c" }
+          ]
+        },
+        {
+          "id": "OBJ-BURNED.1b",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "Help me understand which part actually failed — was it the technology not doing what it claimed, the rollout being bigger than anyone planned, or the vendor disappearing once the contract was signed?",
+          "listen_for": ["technology", "rollout", "vendor behavior"],
+          "branches": [
+            { "if": "Technology", "then": "OBJ-BURNED.2a" },
+            { "if": "Rollout / scope", "then": "OBJ-REWRITE.2a" },
+            { "if": "Vendor behavior", "then": "OBJ-BURNED.2b" }
+          ]
+        },
+        {
+          "id": "OBJ-BURNED.1c",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "How long ago was that — and who on your team still carries it?",
+          "listen_for": ["a date", "a name, often the person on the call"],
+          "branches": [
+            { "if": "They open up", "then": "OBJ-BURNED.1b" },
+            { "if": "Still guarded", "then": "OBJ-BURNED.2c" }
+          ]
+        },
+        {
+          "id": "OBJ-BURNED.2a",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "What did it not do that you needed it to? I'd rather find out now that we have the same gap than waste your quarter.",
+          "listen_for": ["a specific gap", "an old NATS limitation since closed"],
+          "branches": [
+            { "if": "A specific gap", "then": "OBJ-BURNED.3" }
+          ]
+        },
+        {
+          "id": "OBJ-BURNED.2b",
+          "stage": "reframe",
+          "tonality": "matter-of-fact",
+          "say": "Then the thing you're actually evaluating this time isn't the software, it's whether we're still there in month seven. What would you need to see in the first ninety days to believe that — and what did the last one stop doing that tipped you off?",
+          "listen_for": ["support expectations", "named people", "SLAs"],
+          "branches": [
+            { "if": "They state conditions", "then": "OBJ-BURNED.3" }
+          ]
+        },
+        {
+          "id": "OBJ-BURNED.2c",
+          "stage": "reframe",
+          "tonality": "concerned",
+          "say": "Fair enough, and I'm not going to push on it. Let me ask a different way: what would have to be different this time for it to even be worth a conversation?",
+          "listen_for": ["conditions", "'nothing, we're not doing this'"],
+          "branches": [
+            { "if": "Conditions", "then": "OBJ-BURNED.3" },
+            { "if": "Hard no", "then": "CLOSE.3" }
+          ]
+        },
+        {
+          "id": "OBJ-BURNED.3",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "(pause) Here's what concerns me about the scar though. The problem that sent you looking the first time — is it gone, or is it still there and you've just stopped looking at it?",
+          "listen_for": ["'still there'", "a sigh", "'we worked around it'"],
+          "branches": [
+            { "if": "Still there", "then": "OBJ-BURNED.4" },
+            { "if": "Genuinely solved", "then": "CLOSE.3" }
+          ]
+        },
+        {
+          "id": "OBJ-BURNED.4",
+          "stage": "commit",
+          "tonality": "matter-of-fact",
+          "say": "Then let's structure this so getting burned isn't possible. Nothing gets decommissioned, one workload, your engineers drive it, and you have a kill switch at any point. The only thing you're spending is attention. What would you want the first thirty days to look like?",
+          "listen_for": ["they design the pilot", "a name", "a date"],
+          "branches": [
+            { "if": "They describe it", "then": "CLOSE.2" },
+            { "if": "'Let me think'", "then": "STALL.1" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "OBJ-VENDOR",
+      "label": "You're a small company / our team doesn't know NATS",
+      "sounds_like": ["What if you get acquired", "Single-vendor risk", "Nobody on my team has used this", "Hard to hire for"],
+      "usually_means": "Career risk for the person on the call. Answer with the open-source floor and the community numbers, then make the skills gap a solved problem.",
+      "nodes": [
+        {
+          "id": "OBJ-VENDOR.1",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "Reasonable thing to ask. Is the worry that the company isn't around in three years, or that your team can't support it day to day?",
+          "listen_for": ["company risk", "skills risk", "both"],
+          "branches": [
+            { "if": "Company longevity", "then": "OBJ-VENDOR.2a" },
+            { "if": "Team skills", "then": "OBJ-VENDOR.2b" }
+          ]
+        },
+        {
+          "id": "OBJ-VENDOR.2a",
+          "stage": "reframe",
+          "tonality": "matter-of-fact",
+          "say": "Then here's the floor under this decision: the technology is open source with over a thousand contributors and 450 million downloads. If we vanished tomorrow, NATS keeps running and your system doesn't stop. That's not true of the managed service you'd be comparing us to. Does that change the shape of the risk for you?",
+          "listen_for": ["'that helps'", "'I'd still need…'"],
+          "branches": [
+            { "if": "Helps", "then": "OBJ-VENDOR.3" },
+            { "if": "Still needs proof", "then": "OBJ-VENDOR.2c" }
+          ]
+        },
+        {
+          "id": "OBJ-VENDOR.2c",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "What would settle it — customers at your scale, the compliance posture, or time with the people who'd actually be supporting you?",
+          "listen_for": ["references", "SOC 2 / trust center", "the team"],
+          "branches": [
+            { "if": "References", "then": "OBJ-VENDOR.4" },
+            { "if": "Compliance", "then": "OBJ-VENDOR.4" },
+            { "if": "The people", "then": "CLOSE.1" }
+          ]
+        },
+        {
+          "id": "OBJ-VENDOR.2b",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "That one's solvable and it's usually smaller than people expect — there are 45-plus client libraries, so whatever your stack is, it's covered, and there are 11,000 people in the community Slack for the 2am questions. We also run live training. What would your team need to feel comfortable — a week of training, or someone alongside them for the first workload?",
+          "listen_for": ["training", "hand-holding", "both"],
+          "branches": [
+            { "if": "Either", "then": "OBJ-VENDOR.3" }
+          ]
+        },
+        {
+          "id": "OBJ-VENDOR.3",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "(pause) Flip it for a second. What's the risk on the other side — staying on something your team does know, that you already told me [restate their pain]? Which of those two risks is the one you'd have to explain to your boss next year?",
+          "listen_for": ["they choose", "an honest laugh"],
+          "branches": [
+            { "if": "They choose the status quo risk", "then": "OBJ-VENDOR.4" },
+            { "if": "They deflect", "then": "CLOSE.3" }
+          ]
+        },
+        {
+          "id": "OBJ-VENDOR.4",
+          "stage": "commit",
+          "tonality": "matter-of-fact",
+          "say": "Let's take that off the table properly. I'll line up a conversation with a team running this at real scale in a similar shape to yours, and separately point your security reviewer at the trust center so that thread runs in parallel. Who should be on the reference call?",
+          "listen_for": ["names", "a date"],
+          "branches": [
+            { "if": "Names", "then": "CLOSE.1" },
+            { "if": "'Send me the materials'", "then": "STALL.1" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "OBJ-AUTH",
+      "label": "I need to run this by our architect / CTO",
+      "sounds_like": ["I'm not the decision maker", "I'd have to take this to the team", "Let me socialize it internally"],
+      "usually_means": "Either real (you're talking to a champion) or a soft exit. Both are handled by making the internal conversation something you equip rather than something you hope for.",
+      "nodes": [
+        {
+          "id": "OBJ-AUTH.1",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "Makes sense. Who is that, and what's their usual reaction when something new touches the platform layer — interested, or 'we have one of those already'?",
+          "listen_for": ["a name and a title", "a predicted reaction"],
+          "branches": [
+            { "if": "Name + open reaction", "then": "OBJ-AUTH.2a" },
+            { "if": "Name + skeptical reaction", "then": "OBJ-AUTH.2b" },
+            { "if": "No name given", "then": "OBJ-AUTH.2c" }
+          ]
+        },
+        {
+          "id": "OBJ-AUTH.2a",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "What would they need to see to say yes — and what would make them say no on the spot?",
+          "listen_for": ["criteria", "a landmine"],
+          "branches": [
+            { "if": "Criteria", "then": "OBJ-AUTH.3" }
+          ]
+        },
+        {
+          "id": "OBJ-AUTH.2b",
+          "stage": "reframe",
+          "tonality": "confused",
+          "say": "Then if you walk in with this as-is, what happens? Honestly.",
+          "listen_for": ["'it dies'", "'I'd need more'"],
+          "branches": [
+            { "if": "It dies or needs more", "then": "OBJ-AUTH.3" }
+          ]
+        },
+        {
+          "id": "OBJ-AUTH.2c",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "Help me understand the process — when something like this does get approved at your place, what does that path usually look like?",
+          "listen_for": ["a real process", "vagueness = soft exit"],
+          "branches": [
+            { "if": "A real process", "then": "OBJ-AUTH.3" },
+            { "if": "Still vague", "then": "STALL.1" }
+          ]
+        },
+        {
+          "id": "OBJ-AUTH.3",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "(pause) The reason I'm pushing on this — nine times out of ten the pitch-by-proxy doesn't land, not because you'd do it badly, but because they'll ask the second-level questions and you'd be answering for me. Then it sits for a quarter and the problem you described is still there. How often does that happen there?",
+          "listen_for": ["'all the time'", "a laugh of recognition"],
+          "branches": [
+            { "if": "Recognition", "then": "OBJ-AUTH.4" }
+          ]
+        },
+        {
+          "id": "OBJ-AUTH.4",
+          "stage": "commit",
+          "tonality": "matter-of-fact",
+          "say": "So two options. Either I give you a one-page version you can put in front of them and we book fifteen minutes afterwards either way — or we get the three of us on a call for twenty minutes and you don't have to carry my side of it. Which of those is easier in your world?",
+          "listen_for": ["a choice + a date"],
+          "branches": [
+            { "if": "Joint call", "then": "CLOSE.1" },
+            { "if": "One-pager with a follow-up date", "then": "CLOSE.4" },
+            { "if": "Neither", "then": "STALL.1" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "STALL",
+      "label": "I need to think about it / send me some information",
+      "sounds_like": ["Let me review it internally", "Reach out next quarter", "Send something over and I'll take a look"],
+      "usually_means": "A concern you failed to surface earlier. Not a step forward. This node is reachable from anywhere in the tree.",
+      "nodes": [
+        {
+          "id": "STALL.1",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "Of course. When you say think it over — what specifically are you wanting to think through?",
+          "listen_for": ["a real concern", "'just everything'", "silence"],
+          "branches": [
+            { "if": "A real concern surfaces", "then": "STALL.2" },
+            { "if": "'Just everything' / vague", "then": "STALL.1b" }
+          ]
+        },
+        {
+          "id": "STALL.1b",
+          "stage": "isolate",
+          "tonality": "curious",
+          "say": "There are usually only two reasons people land there. Either they're not convinced the problem is big enough to move on yet, or they're not convinced we're the right ones to fix it. Which one is closer?",
+          "listen_for": ["problem size", "vendor fit", "a third thing"],
+          "branches": [
+            { "if": "Problem isn't big enough", "then": "STALL.2a" },
+            { "if": "Not sure about us", "then": "OBJ-VENDOR.1" },
+            { "if": "A third thing", "then": "STALL.2" }
+          ]
+        },
+        {
+          "id": "STALL.2",
+          "stage": "reframe",
+          "tonality": "curious",
+          "say": "Got it. Take me into that — what would have to be true for that to stop being a concern?",
+          "listen_for": ["conditions you can meet", "conditions you can't"],
+          "branches": [
+            { "if": "Conditions you can meet", "then": "STALL.3" },
+            { "if": "Conditions you can't", "then": "CLOSE.3" }
+          ]
+        },
+        {
+          "id": "STALL.2a",
+          "stage": "reframe",
+          "tonality": "concerned",
+          "say": "That's fair, and it might genuinely not be. Earlier you said [restate their pain in their words]. Is that something you'd want solved this year, or is it just background noise you've made peace with?",
+          "listen_for": ["'this year'", "'we've lived with it'"],
+          "branches": [
+            { "if": "This year", "then": "STALL.3" },
+            { "if": "Made peace with it", "then": "CLOSE.3" }
+          ]
+        },
+        {
+          "id": "STALL.3",
+          "stage": "cost",
+          "tonality": "concerned",
+          "say": "(pause) And if it's still sitting exactly where it is six months from now — what does that mean for you personally? Not for the company. For you.",
+          "listen_for": ["something personal", "a deadline", "an exec"],
+          "branches": [
+            { "if": "Anything personal or dated", "then": "STALL.4" },
+            { "if": "Nothing", "then": "CLOSE.3" }
+          ]
+        },
+        {
+          "id": "STALL.4",
+          "stage": "commit",
+          "tonality": "matter-of-fact",
+          "say": "Then let's not leave it to a follow-up email neither of us reads. What's the date you want to have this decided by, and what has to happen between now and then?",
+          "listen_for": ["a date", "steps"],
+          "branches": [
+            { "if": "A date and steps", "then": "CLOSE.1" },
+            { "if": "Still no date", "then": "CLOSE.3" }
+          ]
+        }
+      ]
+    }
+  ],
+
+  "closes": [
+    {
+      "id": "CLOSE.1",
+      "label": "Booked meeting with a name and a date",
+      "tonality": "matter-of-fact",
+      "say": "I'll send an invite for [day/time] with [name] on it, and a two-line agenda so nobody shows up wondering why. If anything changes on your side before then, just move it — you won't hurt my feelings.",
+      "counts_as_commitment": true,
+      "log": "Next step, date, attendees, the pain in their words, the number they said out loud."
+    },
+    {
+      "id": "CLOSE.2",
+      "label": "Technical pilot — one workload, kill switch",
+      "tonality": "matter-of-fact",
+      "say": "Scope it small on purpose: one subject tree, alongside what's running, your engineers driving, nothing decommissioned. I'll write down what 'it worked' means before we start so we're not arguing about it after. Who's the engineer, and what week?",
+      "counts_as_commitment": true,
+      "log": "Engineer name, success criteria in writing, start week, what happens if it passes."
+    },
+    {
+      "id": "CLOSE.3",
+      "label": "Clean no — take the exit",
+      "tonality": "matter-of-fact",
+      "say": "Then I don't think you should do anything right now, and I'd rather say that than keep circling. If the edge or agent side of this moves up the list, I'm easy to find. Anything I can send that'd be useful either way?",
+      "counts_as_commitment": true,
+      "note": "A real no is a result. It frees the pipeline and it is the only response that keeps you welcome later.",
+      "log": "Reason for the no, the trigger that would change it, a date to re-check."
+    },
+    {
+      "id": "CLOSE.4",
+      "label": "Asset send with a dated follow-up attached",
+      "tonality": "matter-of-fact",
+      "say": "I'll send it today. Let's put fifteen minutes in for [date] — if it's not useful you tell me and we stop, and if it is, we'll know what the next question is. Deal?",
+      "counts_as_commitment": true,
+      "note": "Only a commitment because a dated conversation is attached. An asset sent into silence is not a step.",
+      "log": "Asset sent, follow-up date booked, the question it is meant to answer."
+    }
+  ],
+
+  "guardrails": [
+    "Only assert public proof points: 450M+ downloads, 1,000+ contributors, 45+ client libraries, 41K+ GitHub stars, 11K+ Slack members; named customers Browserbase, NVIDIA, Replit, Mastercard, Rivian, Uniphore, OutSystems, May Mobility, Verrus.",
+    "Never invent throughput numbers, cost savings, or contract details — including on the NVIDIA Cloud Functions story.",
+    "Never quote pricing, tiers, or discounts from this tree. Commercial terms come from the deal's source of truth.",
+    "Never promise a roadmap capability. 'I'll confirm' is the answer.",
+    "Point security reviewers at trust.synadia.com rather than describing controls yourself.",
+    "Retired language — do not use: message broker, message bus, messaging system, IoT messaging, pub/sub at scale as a headline, ZooKeeper/ops-toil as the opener, Confluent licensing cost as the hook.",
+    "Current language: fabric, connectivity layer, nervous system, edge autonomy, coordination not request stitching, the agent runs where the data is.",
+    "Attach capabilities to the right product: Insights observes, Protect enforces, Platform is single-tenant in their cloud, Cloud is multi-tenant hosted, Deploy is for Kubernetes.",
+    "If the user says the old Kafka-cost angle is right for a specific account, follow the user. Flag the mismatch in one line and move on."
+  ]
+};
+
+const NODES = {};
+const TRUNK_OF = {};
+TREE.objections.forEach(o => o.nodes.forEach(n => { NODES[n.id] = n; TRUNK_OF[n.id] = o; }));
+TREE.closes.forEach(c => { NODES[c.id] = Object.assign({ stage: 'commit', terminal: true }, c); });
+
+const STAGE_ORDER = TREE.stages.map(s => s.id);
+let path = [];
+
+const el = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* the parenthetical stage direction inside a line is spoken instruction, not words */
+function sayHtml(text) {
+  return esc(text).replace(/^\((.+?)\)\s*/, '<span class="stage-dir">($1)</span> ');
+}
+
+function current() { return path.length ? NODES[path[path.length - 1]] : null; }
+
+function renderStages() {
+  const cur = current();
+  const idx = cur ? STAGE_ORDER.indexOf(cur.stage) : -1;
+  el('stages').innerHTML = TREE.stages.map((s, i) => `
+    <div class="stage ${i === idx ? 'on' : ''} ${i < idx ? 'done' : ''}">
+      <div class="n">${i + 1}</div>
+      <div class="t">${esc(s.name)}</div>
+      <div class="p">${esc(s.rule)}</div>
+    </div>`).join('');
+}
+
+function renderPath() {
+  const box = el('path');
+  if (!path.length) { box.innerHTML = '<div class="empty">Nothing yet. Pick what they said.</div>'; return; }
+  box.innerHTML = path.map((id, i) => `
+    <div class="step ${i === path.length - 1 ? 'cur' : ''}">
+      <span class="dot">${i === 0 ? '&bull;' : '&rarr;'}</span><span>${esc(id)}</span>
+    </div>`).join('');
+}
+
+function renderPicker() {
+  el('main').innerHTML = `
+    <p class="picker-intro">They just said something. Find the closest trunk — the label is what
+    they said, the line under it is what it usually means.</p>
+    <div class="trunks">
+      ${TREE.objections.map(o => `
+        <button class="trunk" data-start="${esc(o.nodes[0].id)}">
+          <span class="id">${esc(o.id)}</span>
+          <span class="lbl">${esc(o.label)}</span>
+          <span class="means">${esc(o.usually_means)}</span>
+        </button>`).join('')}
+    </div>`;
+}
+
+function renderNode(node) {
+  const trunk = TRUNK_OF[node.id];
+  const stage = TREE.stages.find(s => s.id === node.stage);
+  const isStall = node.id.startsWith('STALL');
+  const isClose = node.id.startsWith('CLOSE');
+  const firstOfTrunk = trunk && trunk.nodes[0].id === node.id;
+
+  let html = `<div class="card">
+    <div class="card-head">
+      <span class="nid">${esc(node.id)}</span>
+      <span class="chip ${isStall ? 'warn' : ''}">${esc(isClose ? node.label : stage.name)}</span>
+      <span class="chip tone">${esc(node.tonality)}</span>
+    </div>`;
+
+  if (firstOfTrunk) {
+    html += `<div class="trunkmeta" style="padding-top:14px">
+      <div><b>Sounds like:</b> ${trunk.sounds_like.map(esc).join(' &middot; ')}</div>
+      <div><b>Usually means:</b> ${esc(trunk.usually_means)}</div>
+    </div>`;
+  }
+
+  html += `<p class="say">&ldquo;${sayHtml(node.say)}&rdquo;</p>`;
+
+  if (node.listen_for && node.listen_for.length) {
+    html += `<div class="listen"><span class="k">Listen for</span>
+      ${node.listen_for.map(l => `<span class="v">${esc(l)}</span>`).join('')}</div>`;
+  }
+
+  if (node.terminal) {
+    html += `<div class="terminal">
+      ${node.note ? `<div class="note">${esc(node.note)}</div>` : ''}
+      <div class="log"><b>Log it:</b> ${esc(node.log)}</div>
+    </div>`;
+  } else if (node.branches && node.branches.length) {
+    html += `<div class="branches"><span class="k">Then</span>
+      ${node.branches.map((b, i) => `
+        <button class="branch" data-goto="${esc(b.then)}">
+          <span class="key">${i + 1}</span>
+          <span>${esc(b.if)}</span>
+          <span class="to">${esc(b.then)} &rarr;</span>
+        </button>`).join('')}
+    </div>`;
+  }
+
+  html += `</div>`;
+  el('main').innerHTML = html;
+}
+
+function renderControls() {
+  const cur = current();
+  const bits = [];
+  if (path.length) {
+    bits.push(`<button class="btn" data-act="back">&larr; Back</button>`);
+    bits.push(`<button class="btn" data-act="restart">Restart</button>`);
+  }
+  if (cur && !cur.id.startsWith('STALL') && !cur.terminal) {
+    bits.push(`<button class="btn danger" data-act="stall">They stalled &rarr; STALL.1</button>`);
+  }
+  if (path.length) {
+    bits.push(`<button class="btn primary" data-act="copy">Copy path for Claude</button>`);
+  }
+  el('controls').innerHTML = bits.join('');
+}
+
+function render() {
+  const cur = current();
+  if (cur) renderNode(cur); else renderPicker();
+  renderStages();
+  renderPath();
+  renderControls();
+  el('copyarea').innerHTML = '';
+}
+
+function go(id) {
+  if (!NODES[id]) return;
+  path.push(id);
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---------- handoff to Claude ---------- */
+function transcript() {
+  const notes = el('notes').value.trim();
+  const lines = [];
+  lines.push('Mode: Coach');
+  lines.push('Offer: Synadia (creators of NATS) — fabric for agents, devices and services across cloud and edge.');
+  lines.push('Tree: Synadia NEPQ Objection Tree v' + TREE.meta.version);
+  lines.push('');
+  lines.push('Path so far: ' + path.join(' -> '));
+  const cur = current();
+  if (cur) {
+    lines.push('Current node: ' + cur.id + ' (' + cur.stage + ', ' + cur.tonality + ')');
+    lines.push('Line I just used: "' + cur.say + '"');
+  }
+  if (notes) { lines.push(''); lines.push('What the prospect actually said / my notes:'); lines.push(notes); }
+  lines.push('');
+  lines.push('Give me the current node and the next question only.');
+  return lines.join('\n');
+}
+
+function copyOut() {
+  const text = transcript();
+  const done = ok => {
+    el('copyarea').innerHTML = ok
+      ? '<div class="toast">Copied. Paste it into Claude.</div>'
+      : '<textarea class="copybox" readonly></textarea><div class="toast">Select and copy this.</div>';
+    if (!ok) {
+      const ta = el('copyarea').querySelector('textarea');
+      ta.value = text; ta.focus(); ta.select();
+    }
+  };
+  try {
+    navigator.clipboard.writeText(text).then(() => done(true), () => done(false));
+  } catch (e) { done(false); }
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const start = e.target.closest('[data-start]');
+  if (start) { path = []; go(start.dataset.start); return; }
+  const branch = e.target.closest('[data-goto]');
+  if (branch) { go(branch.dataset.goto); return; }
+  const act = e.target.closest('[data-act]');
+  if (!act) return;
+  const a = act.dataset.act;
+  if (a === 'back') { path.pop(); render(); }
+  else if (a === 'restart') { path = []; render(); }
+  else if (a === 'stall') { go('STALL.1'); }
+  else if (a === 'copy') { copyOut(); }
+});
+
+document.addEventListener('keydown', e => {
+  const t = e.target.tagName;
+  if (t === 'TEXTAREA' || t === 'INPUT' || e.metaKey || e.ctrlKey || e.altKey) return;
+  const cur = current();
+  if (e.key >= '1' && e.key <= '9' && cur && cur.branches) {
+    const b = cur.branches[Number(e.key) - 1];
+    if (b) { e.preventDefault(); go(b.then); }
+  } else if (e.key === 'Escape' && path.length) {
+    e.preventDefault(); path.pop(); render();
+  }
+});
+
+/* per-viewer convenience only */
+const notes = el('notes');
+try { const saved = localStorage.getItem('nepq-notes'); if (saved) notes.value = saved; } catch (e) {}
+notes.addEventListener('input', () => { try { localStorage.setItem('nepq-notes', notes.value); } catch (e) {} });
+
+el('notcommit').innerHTML = TREE.not_a_commitment.map(s => `<li>&ldquo;${esc(s)}&rdquo;</li>`).join('')
+  + '<li><b>A commitment has a date, a name, and a next action.</b></li>';
+el('guardrails').innerHTML = TREE.guardrails.map(g => `<li>${esc(g)}</li>`).join('');
+
+render();
+</script>
