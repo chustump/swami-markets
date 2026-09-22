@@ -135,6 +135,24 @@ export function SalesProvider({ children }) {
           calls: s.calls.map((c) => (c.id === id ? { ...c, status: "live", endedAt: undefined } : c)),
           activeCallId: id,
         })),
+      linkGranola: (id, note) =>
+        update((s) => ({
+          ...s,
+          calls: s.calls.map((c) =>
+            c.id === id
+              ? { ...c, granola: { noteId: note.id, title: note.title, url: note.url, linkedAt: Date.now(), utterances: [], summary: null, syncedAt: null } }
+              : c,
+          ),
+        })),
+      unlinkGranola: (id) =>
+        update((s) => ({ ...s, calls: s.calls.map((c) => (c.id === id ? { ...c, granola: null } : c)) })),
+      setGranolaTranscript: (id, utterances, extra) =>
+        update((s) => ({
+          ...s,
+          calls: s.calls.map((c) =>
+            c.id === id && c.granola ? { ...c, granola: { ...c.granola, utterances, ...(extra || {}) } } : c,
+          ),
+        })),
       deleteCall: (id) =>
         update((s) => ({
           ...s,

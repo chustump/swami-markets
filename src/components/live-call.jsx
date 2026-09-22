@@ -6,6 +6,7 @@ import { ChevronLeft, PanelRight } from "lucide-react";
 import { Badge, Button, Textarea, Eyebrow, cn } from "./ui";
 import { NodeCard } from "./node-card";
 import { Dossier } from "./dossier";
+import { TranscriptPanel } from "./transcript-panel";
 import { interpolate } from "@/lib/sales/interpolate";
 import { useSales } from "@/lib/sales/store";
 import { getNode, OBJECTION_INDEX, START_NODE, TERMINAL_STATUS } from "@/lib/sales/tree";
@@ -53,6 +54,29 @@ function PhaseRail({ current, onJump }) {
   );
 }
 
+function SideTabs({ side, setSide, linked }) {
+  return (
+    <div className="mb-2 flex gap-1">
+      {[
+        ["dossier", "Dossier"],
+        ["transcript", linked ? "Transcript ●" : "Transcript"],
+      ].map(([k, label]) => (
+        <button
+          key={k}
+          type="button"
+          onClick={() => setSide(k)}
+          className={cn(
+            "rounded-md px-2.5 py-1 text-[11px] uppercase tracking-[0.12em]",
+            side === k ? "bg-raised text-fg" : "text-subtle hover:text-fg",
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function LiveCall({ call }) {
   const router = useRouter();
   const { profile, goTo, back, patchNotes, finish } = useSales();
@@ -60,6 +84,7 @@ export function LiveCall({ call }) {
   const [note, setNote] = useState("");
   const [dossierOpen, setDossierOpen] = useState(false);
   const [jumpOpen, setJumpOpen] = useState(false);
+  const [side, setSide] = useState("dossier");
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -78,6 +103,13 @@ export function LiveCall({ call }) {
   const capture = (sample) => {
     const value = note.trim() || (sample ? interpolate(sample, profile, call.notes) : "");
     if (node.noteKey && value) patchNotes(call.id, { [node.noteKey]: value });
+  };
+
+  const captureFromTranscript = (text) => {
+    if (!node.noteKey || !text) return;
+    const next = note.trim() ? `${note.trim()} ${text}` : text;
+    setNote(next);
+    patchNotes(call.id, { [node.noteKey]: next });
   };
 
   const take = (branchId) => {
@@ -255,16 +287,22 @@ export function LiveCall({ call }) {
           <p className="mt-4 text-[11px] text-subtle">Keys 1–{Math.min(9, node.branches.length)} pick a branch. B goes back.</p>
         </div>
 
-        <div className="hidden h-[calc(100vh-10rem)] w-[22rem] shrink-0 lg:block">
-          <Dossier call={call} />
+        <div className="hidden h-[calc(100vh-10rem)] w-[22rem] shrink-0 flex-col lg:flex">
+          <SideTabs side={side} setSide={setSide} linked={Boolean(call.granola)} />
+          <div className="min-h-0 flex-1">
+            {side === "dossier" ? <Dossier call={call} /> : <TranscriptPanel call={call} onCapture={captureFromTranscript} />}
+          </div>
         </div>
       </div>
 
       {dossierOpen ? (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button type="button" className="absolute inset-0 bg-ink/70" aria-label="Close dossier" onClick={() => setDossierOpen(false)} />
-          <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-xl bg-bg p-4 pb-24">
-            <Dossier call={call} />
+          <div className="absolute inset-x-0 bottom-0 flex max-h-[85vh] flex-col rounded-t-xl bg-bg p-4 pb-24">
+            <SideTabs side={side} setSide={setSide} linked={Boolean(call.granola)} />
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {side === "dossier" ? <Dossier call={call} /> : <TranscriptPanel call={call} onCapture={captureFromTranscript} />}
+            </div>
           </div>
         </div>
       ) : null}

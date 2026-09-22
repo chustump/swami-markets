@@ -7,6 +7,7 @@ import { PRODUCTS } from "@/lib/sales/products";
 import { CUSTOMERS } from "@/lib/sales/proof";
 import { TOKEN_HELP } from "@/lib/sales/interpolate";
 import { useSales } from "@/lib/sales/store";
+import { granolaStatus } from "@/lib/sales/granola";
 
 const FIELDS = [
   ["name", "Profile name", "Multi-cloud AI platform"],
@@ -24,6 +25,11 @@ export default function DealPage() {
   const { profile, setProfile, hydrated } = useSales();
   const [draft, setDraft] = useState(profile);
   const [saved, setSaved] = useState(false);
+  const [granola, setGranola] = useState(null);
+
+  useEffect(() => {
+    granolaStatus().then(setGranola).catch(() => setGranola({ configured: false, ok: false }));
+  }, []);
 
   useEffect(() => {
     if (hydrated) setDraft(profile);
@@ -152,6 +158,28 @@ export default function DealPage() {
             </Card>
           ))}
         </div>
+      </section>
+
+      <section>
+        <Card>
+          <Eyebrow>Granola</Eyebrow>
+          {granola === null ? (
+            <p className="mt-1 text-sm text-subtle">Checking…</p>
+          ) : granola.ok ? (
+            <p className="mt-1 text-sm text-ok">Connected.{granola.sample ? ` Latest note: “${granola.sample}”.` : ""} Live calls can link a Granola note and stream its transcript beside the tree.</p>
+          ) : granola.configured ? (
+            <p className="mt-1 text-sm text-danger">Key is set but Granola rejected it: {granola.message}</p>
+          ) : (
+            <div className="mt-1 text-sm text-muted">
+              <p>Not connected. To stream transcripts into live calls:</p>
+              <ol className="mt-2 space-y-1 text-xs leading-relaxed">
+                <li>1. Granola → Settings → Connectors → API keys → create a key (<code className="font-mono">grn_…</code>, Business/Enterprise plan).</li>
+                <li>2. Netlify → Site configuration → Environment variables → <code className="font-mono">GRANOLA_API_KEY</code>. Optional <code className="font-mono">GRANOLA_ME</code> = your name as Granola labels it.</li>
+                <li>3. Redeploy.</li>
+              </ol>
+            </div>
+          )}
+        </Card>
       </section>
 
       <section className="flex flex-wrap items-center gap-3">

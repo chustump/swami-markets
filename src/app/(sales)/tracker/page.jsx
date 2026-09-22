@@ -56,6 +56,7 @@ export default function TrackerPage() {
                 <th className="px-4 py-3 font-medium">Seam</th>
                 <th className="px-4 py-3 font-medium">Next step / trigger</th>
                 <th className="px-4 py-3 font-medium">Objections</th>
+                <th className="px-4 py-3 font-medium">Granola</th>
                 <th className="px-4 py-3 font-medium" />
               </tr>
             </thead>
@@ -75,6 +76,13 @@ export default function TrackerPage() {
                   <td className="max-w-48 px-4 py-3 text-xs text-muted">{c.notes.problem || "—"}</td>
                   <td className="max-w-56 px-4 py-3 text-xs text-muted">{c.notes.nextStep || "—"}</td>
                   <td className="max-w-48 px-4 py-3 text-xs text-muted">{c.objectionsHit.length ? c.objectionsHit.join(", ") : "—"}</td>
+                  <td className="max-w-48 px-4 py-3 text-xs text-muted">
+                    {c.granola ? (
+                      <a className="underline hover:text-fg" href={c.granola.url} target="_blank" rel="noreferrer">
+                        {c.granola.utterances?.length ? `${c.granola.utterances.length} lines` : "linked"}
+                      </a>
+                    ) : "—"}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
                       {c.status === "live" ? (
