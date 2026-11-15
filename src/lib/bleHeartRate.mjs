@@ -98,54 +98,74 @@ export async function connectHeartRate(device, { onHeartRate, onDisconnect } = {
   };
   device.addEventListener("gattserverdisconnected", onDisconnected);
 
-  const server = await device.gatt.connect();
-  const hrService = await server.getPrimaryService(HEART_RATE_SERVICE);
-  const hrChar = await hrService.getCharacteristic(HEART_RATE_MEASUREMENT);
+  let hrChar = null;
+  let handleNotification = null;
 
-  let sensorLocation = null;
   try {
-    const locChar = await hrService.getCharacteristic(BODY_SENSOR_LOCATION);
-    const locValue = await locChar.readValue();
-    sensorLocation = SENSOR_LOCATIONS[locValue.getUint8(0)] || "Unknown";
-  } catch {
-    sensorLocation = "Wrist";
-  }
+    const server = await device.gatt.connect();
+    const hrService = await server.getPrimaryService(HEART_RATE_SERVICE);
+    hrChar = await hrService.getCharacteristic(HEART_RATE_MEASUREMENT);
 
-  let battery = null;
-  try {
-    const battService = await server.getPrimaryService(BATTERY_SERVICE);
-    const battChar = await battService.getCharacteristic(BATTERY_LEVEL);
-    const battValue = await battChar.readValue();
-    battery = battValue.getUint8(0);
-  } catch {
-    battery = null;
-  }
+    let sensorLocation = null;
+    try {
+      const locChar = await hrService.getCharacteristic(BODY_SENSOR_LOCATION);
+      const locValue = await locChar.readValue();
+      sensorLocation = SENSOR_LOCATIONS[locValue.getUint8(0)] || "Unknown";
+    } catch {
+      sensorLocation = "Wrist";
+    }
 
-  const handleNotification = (event) => {
-    const value = event.target.value;
-    const reading = parseHeartRate(value);
-    if (onHeartRate) onHeartRate(reading);
-  };
+    let battery = null;
+    try {
+      const battService = await server.getPrimaryService(BATTERY_SERVICE);
+      const battChar = await battService.getCharacteristic(BATTERY_LEVEL);
+      const battValue = await battChar.readValue();
+      battery = battValue.getUint8(0);
+    } catch {
+      battery = null;
+    }
 
-  await hrChar.startNotifications();
-  hrChar.addEventListener("characteristicvaluechanged", handleNotification);
+    handleNotification = (event) => {
+      const value = event.target.value;
+      const reading = parseHeartRate(value);
+      if (onHeartRate) onHeartRate(reading);
+    };
 
-  return {
-    device,
-    server,
-    sensorLocation,
-    battery,
-    async disconnect() {
+    await hrChar.startNotifications();
+    hrChar.addEventListener("characteristicvaluechanged", handleNotification);
+
+    return {
+      device,
+      server,
+      sensorLocation,
+      battery,
+      async disconnect() {
+        try {
+          hrChar.removeEventListener("characteristicvaluechanged", handleNotification);
+          await hrChar.stopNotifications();
+        } catch {
+          /* already disconnected */
+        }
+        device.removeEventListener("gattserverdisconnected", onDisconnected);
+        if (device.gatt?.connected) device.gatt.disconnect();
+      },
+    };
+  } catch (err) {
+    if (hrChar && handleNotification) {
       try {
         hrChar.removeEventListener("characteristicvaluechanged", handleNotification);
-        await hrChar.stopNotifications();
       } catch {
-        /* already disconnected */
+        /* ignore */
       }
-      device.removeEventListener("gattserverdisconnected", onDisconnected);
+    }
+    device.removeEventListener("gattserverdisconnected", onDisconnected);
+    try {
       if (device.gatt?.connected) device.gatt.disconnect();
-    },
-  };
+    } catch {
+      /* ignore */
+    }
+    throw err;
+  }
 }
 
 /** Demo stream for UI testing without a watch. */

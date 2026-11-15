@@ -79,7 +79,6 @@ function Sparkline({ points, color }) {
         strokeWidth="2.75"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeDasharray="240"
       />
     </svg>
   );
@@ -210,6 +209,12 @@ export default function FenixMonitorPage() {
         onHeartRate: pushReading,
         onDisconnect: () => {
           setStatus("idle");
+          setBpm(null);
+          setHistory([]);
+          setStartedAt(null);
+          setDeviceName("");
+          setSensorLocation("");
+          setBattery(null);
           setError("Watch disconnected. Reconnect when ready.");
           sessionRef.current = null;
         },
@@ -222,6 +227,7 @@ export default function FenixMonitorPage() {
       setStartedAt(Date.now());
       setStatus("live");
     } catch (err) {
+      await cleanup();
       const message =
         err?.name === "NotFoundError"
           ? "No device selected. Enable Broadcast Heart Rate on your Fenix 7, then try again."
@@ -232,6 +238,7 @@ export default function FenixMonitorPage() {
   }, [acceptAll, cleanup, pushReading]);
 
   const startDemo = useCallback(async () => {
+    if (status === "connecting" || status === "live") return;
     await cleanup();
     setError("");
     setDeviceName("Fenix 7 (Demo)");
@@ -242,7 +249,7 @@ export default function FenixMonitorPage() {
     setStartedAt(Date.now());
     setStatus("demo");
     stopDemoRef.current = startDemoStream(pushReading);
-  }, [cleanup, pushReading]);
+  }, [cleanup, pushReading, status]);
 
   const installApp = useCallback(async () => {
     if (!installPrompt) return;
@@ -549,7 +556,15 @@ export default function FenixMonitorPage() {
                 >
                   {status === "connecting" ? "Connecting…" : "Connect Fenix 7"}
                 </button>
-                <button type="button" onClick={startDemo} style={secondaryButtonStyle}>
+                <button
+                  type="button"
+                  onClick={startDemo}
+                  disabled={status === "connecting"}
+                  style={{
+                    ...secondaryButtonStyle,
+                    opacity: status === "connecting" ? 0.55 : 1,
+                  }}
+                >
                   Try demo mode
                 </button>
               </>

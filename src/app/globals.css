@@ -81,15 +81,6 @@ a {
   }
 }
 
-@keyframes draw-line {
-  from {
-    stroke-dashoffset: 240;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
 @keyframes breathe {
   0%,
   100% {
@@ -116,16 +107,11 @@ a {
   animation: breathe 2.4s ease-in-out infinite;
 }
 
-.sparkline path {
-  animation: draw-line 0.9s ease both;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .anim-rise,
   .anim-rise-delay,
   .pulse-ring,
-  .breathe,
-  .sparkline path {
+  .breathe {
     animation: none !important;
   }
 }
