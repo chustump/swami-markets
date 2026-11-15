@@ -1,8 +1,117 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+:root {
+  --ink: #1a2420;
+  --ink-soft: #3d4a44;
+  --muted: #6b7a72;
+  --line: rgba(26, 36, 32, 0.12);
+  --paper: #e8efe9;
+  --paper-2: #d5e3d8;
+  --mist: #f3f7f4;
+  --pine: #1f5c45;
+  --pine-deep: #143d2e;
+  --signal: #c45c26;
+  --signal-soft: #e8a06a;
+  --zone-rest: #5a7a6e;
+  --zone-warm: #2f8f6b;
+  --zone-aero: #1f7a9c;
+  --zone-thresh: #c45c26;
+  --zone-max: #b32d3a;
+  --ok: #1f8a5b;
+  --warn: #b7791f;
+  --danger: #b32d3a;
+  --shadow: 0 18px 50px rgba(20, 40, 30, 0.14);
+  --font-display: "Syne", sans-serif;
+  --font-body: "Figtree", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--mist);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
 
 body {
-  background-color: #060710;
-  color: #e6e8f0;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(232, 160, 106, 0.28), transparent 55%),
+    radial-gradient(900px 500px at -10% 20%, rgba(31, 92, 69, 0.16), transparent 50%),
+    linear-gradient(165deg, #f7faf8 0%, #e4eee7 42%, #d7e5dc 100%);
+  background-attachment: fixed;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+.anim-rise {
+  animation: rise-in 0.55s ease both;
+}
+
+.anim-rise-delay {
+  animation: rise-in 0.7s ease 0.08s both;
+}
+
+.pulse-ring {
+  animation: pulse-ring 1.2s ease-out infinite;
+}
+
+.breathe {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-rise,
+  .anim-rise-delay,
+  .pulse-ring,
+  .breathe {
+    animation: none !important;
+  }
 }
