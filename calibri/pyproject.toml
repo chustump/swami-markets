@@ -1,0 +1,23 @@
+[project]
+name = "calibri"
+version = "0.1.0"
+description = "Parameter-efficient calibration of diffusion transformers with CMA-ES"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "torch>=2.5",
+    "numpy>=2.0",
+    "cma>=4.4",
+]
+
+[project.optional-dependencies]
+flux = ["diffusers>=0.35", "transformers>=4.52", "accelerate>=1.10", "sentencepiece", "protobuf", "Pillow"]
+rewards = ["transformers>=4.52", "image-reward>=1.5", "requests>=2.32"]
+dev = ["pytest", "diffusers>=0.35"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
