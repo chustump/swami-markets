@@ -286,6 +286,7 @@ export default function App() {
             <div style={{ fontSize: mob ? 9 : 10, color: T.dim }}><span style={{ color: T.green }}>Polymarket</span> × <span style={{ color: T.blue }}>Kalshi</span></div>
           </div>
         </div>
+        <a href="/charts" style={{ fontSize: 11, fontWeight: 700, color: T.orange, textDecoration: "none", border: `1px solid ${T.orange}44`, borderRadius: 8, padding: "6px 10px", whiteSpace: "nowrap", order: 2 }}>📈 Signals</a>
         {!mob && <div style={{ display: "flex", gap: 3, background: T.card, borderRadius: 10, padding: 3, border: `1px solid ${T.border}` }}>
           {tabs.map(t => <button key={t.k} onClick={() => setTab(t.k)} style={{ background: tab === t.k ? T.hover : "transparent", border: "none", borderRadius: 8, padding: "6px 12px", color: tab === t.k ? T.text : T.muted, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}
         </div>}
