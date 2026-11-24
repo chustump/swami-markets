@@ -133,7 +133,8 @@ export default function App() {
     formData.append('email', email);
 
     try {
-      const res = await fetch('/', {
+      // Netlify collects submissions posted to the static form file, not to a Next.js page.
+      const res = await fetch('/__forms.html', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString()
@@ -359,8 +360,9 @@ export default function App() {
           {/* 7. WAITLIST */}
           <Scene mood="greet" say="Leave your email and I shall summon you when the full oracle opens." style={{ padding: mob ? "20px 0 30px" : "30px 0 60px" }}>
             <Reveal>
-              <form name="waitlist" data-netlify="true" onSubmit={handleSubscribe} className="panel" style={{ padding: 22, maxWidth: 520, margin: "0 auto", textAlign: "center" }}>
+              <form name="waitlist" method="POST" action="/__forms.html" onSubmit={handleSubscribe} className="panel" style={{ padding: 22, maxWidth: 520, margin: "0 auto", textAlign: "center" }}>
                 <input type="hidden" name="form-name" value="waitlist" />
+                <input type="text" name="bot-field" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ display: "none" }} />
                 <div style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Join the Oracle Waitlist</div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <input type="email" name="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" aria-label="Email address" required style={{ flex: 1, minWidth: 0, background: T.bg, border: `1px solid ${T.border}`, borderRadius: 999, padding: "11px 16px", color: T.text, fontSize: 14, outline: "none" }} />

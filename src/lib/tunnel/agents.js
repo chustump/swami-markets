@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { CLAUDE_MODEL } from '../claude.js';
 
 // Each agent is { name, ask(system, user) -> { text, tokensIn, tokensOut } }.
 // An agent whose key is not set is left out; the tunnel runs with whoever is present.
@@ -84,7 +85,7 @@ export function agentsFromEnv(env = process.env) {
   if (env.ANTHROPIC_API_KEY) {
     agents.push(
       claude({
-        model: env.CLAUDE_MODEL || 'claude-opus-5-5',
+        model: CLAUDE_MODEL,
         maxTokens: Math.max(maxTokens, 1024),
       })
     );

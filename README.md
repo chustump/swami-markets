@@ -45,6 +45,7 @@ proxy, run it with `NODE_USE_ENV_PROXY=1`.
 | Variable | Used by | Notes |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Ask Swami, H2H analysis, tunnel | Required for those features. |
+| `CLAUDE_MODEL` | Ask Swami, H2H analysis, tunnel | Claude model ID. Default `claude-sonnet-5-5`, set in `src/lib/claude.js`. |
 | `XAI_API_KEY`, `MUSE_API_KEY` | `/api/tunnel` | Optional extra models. |
 | `NEWS_FEED_URL` | Edge scanner news | RSS search URL with `{q}` where the query goes. Defaults to Google News RSS. |
 | `KALSHI_CACHE_SECONDS` | Edge scanner | CDN cache lifetime for scan results. Default 300. |
@@ -58,3 +59,9 @@ npm install
 npm run dev
 npm test
 ```
+
+## Waitlist form (Netlify Forms)
+
+Netlify finds the form in `public/__forms.html` at deploy time; the form on the
+home page posts to that file. Form detection must be on for the Netlify project:
+Project configuration → Forms → Enable form detection, then redeploy.

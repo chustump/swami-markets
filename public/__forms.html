@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Netlify Forms Proxy</title>
+    <title>Forms</title>
   </head>
   <body>
-    <!-- A hidden static form so Netlify build bots can discover the waitlist architecture -->
-    <form name="waitlist" netlify netlify-honeypot="bot-field" hidden>
+    <!-- Netlify reads this static copy at deploy time to register the waitlist form.
+         Keep the form name and field names the same as the form in src/app/page.jsx. -->
+    <form name="waitlist" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="waitlist" />
+      <input type="text" name="bot-field" />
       <input type="email" name="email" />
     </form>
   </body>
