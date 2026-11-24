@@ -306,6 +306,7 @@ export default function App() {
               {live.state === "error" && <div className="panel" style={{ gridColumn: "1 / -1", padding: 20, textAlign: "center", color: T.soft, fontSize: 14 }}>The crystal ball is cloudy. Live Kalshi data is unavailable for the moment.</div>}
             </div>
             <div style={{ textAlign: "center", marginTop: 18 }}><Link className="btn ghost" href="/edge">Open the full edge scanner →</Link></div>
+            <div style={{ textAlign: "center", marginTop: 12, fontSize: 12, color: T.muted }}>For fun and analysis, not advice. <Link href="/edge#record" style={{ color: T.soft }}>See how his numbers have actually done.</Link></div>
           </Scene>
 
           {/* 4. BEST OPPS */}

@@ -25,7 +25,9 @@ endpoints; there is no order placement and no Kalshi account key anywhere.
 
 **Model** (`src/lib/kalshi/model.js`). The market price is the starting point. A
 logistic model adjusts it using the price level, the 24-hour trend, 6-hour
-momentum and whether the trend came with a volume surge. Order book lean and
+momentum and whether the trend came with a volume surge. The adjustment is
+capped (about 7 points at a 50¢ price), and markets due to resolve within four
+hours are skipped, since most are games in progress. Order book lean and
 news tone are small extra nudges in the live scanner only. Edge is the model's
 probability minus the price you would pay (the ask for YES, 1 − bid for NO)
 minus Kalshi's standard taker fee of 7% × price × (1 − price).

@@ -8,7 +8,10 @@ export async function cached(key, ttlMs, load) {
   const promise = load();
   store.set(key, { promise, expires: Date.now() + ttlMs });
   try {
-    return await promise;
+    const value = await promise;
+    // A partial scan is only worth keeping briefly.
+    if (value?.universe && !value.universe.complete) store.get(key).expires = Date.now() + Math.min(ttlMs, 60000);
+    return value;
   } catch (err) {
     store.delete(key);
     throw err;

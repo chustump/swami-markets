@@ -54,13 +54,18 @@ export function features(candles, bid, ask) {
 
 // extras are live-only nudges (order book imbalance, news) that cannot be
 // reconstructed for settled markets and so are not part of the backtest.
+// The model may move the market's price by at most this much in log-odds
+// (about 7 points at a 50 cent price). The backtest gives no reason to trust
+// bigger disagreements, and without a cap a fast-moving market gets a wild number.
+export const MAX_SHIFT = 0.3;
+
 export function predict(f, extras = {}, w = weights.coef) {
   let z = 0;
   for (let i = 0; i < w.length; i++) z += w[i] * f.x[i];
-  const base = sigmoid(z);
-  z += (weights.live?.imbalance ?? 0) * (extras.imbalance || 0);
-  z += (weights.live?.news ?? 0) * (extras.news || 0);
-  return { base, prob: sigmoid(z) };
+  const market = f.x[1];
+  const capped = market + clamp(z - market, -MAX_SHIFT, MAX_SHIFT);
+  const live = (weights.live?.imbalance ?? 0) * (extras.imbalance || 0) + (weights.live?.news ?? 0) * (extras.news || 0);
+  return { base: sigmoid(capped), prob: sigmoid(capped + live) };
 }
 
 // Net edge in dollars per contract after crossing the spread and paying the fee.

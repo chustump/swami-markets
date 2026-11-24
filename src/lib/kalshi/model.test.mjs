@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { features, predict, edge, fee, imbalance } from './model.js';
+import { features, predict, edge, fee, imbalance, MAX_SHIFT, logit } from './model.js';
 import { scoreHeadline, keywords } from './news.js';
 import { book } from './client.js';
 
@@ -53,4 +53,11 @@ test('headline scoring: relevance from shared keywords, tone from a word list', 
   assert.equal(s.relevance, 1);
   assert.ok(s.tone <= 1 && s.tone >= -1);
   assert.equal(scoreHeadline('Local bakery wins award', keys).relevance, 0);
+});
+
+test('the model cannot move the market price by more than the cap', () => {
+  const f = { x: [1, logit(0.4), 3, 3, 6] };
+  const p = predict(f, {}, [0, 1, 1, 1, 1]).base;
+  near(logit(p) - logit(0.4), MAX_SHIFT, 1e-9);
+  assert.ok(p < 0.48);
 });

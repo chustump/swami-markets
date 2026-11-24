@@ -31,8 +31,8 @@ function confidence(net, f, vol24, candleCount) {
   let level = 'Low';
   if (net >= 0.05 && f.spread <= 0.02 && vol24 >= 5000 && candleCount >= 24) level = 'High';
   else if (net >= 0.02 && f.spread <= 0.04 && vol24 >= 1000) level = 'Medium';
-  // Without backtest evidence of real edge, nothing is called High.
-  if (level === 'High' && !modelBeatsMarket) level = 'Medium';
+  // Until the backtest shows the model beating Kalshi's prices, every pick is Low.
+  if (!modelBeatsMarket) level = 'Low';
   return level;
 }
 
@@ -66,6 +66,7 @@ function reasons(m, f, sc, e, extras, hours) {
   if (Math.abs(extras.imbalance) > 0.3)
     out.push(`The order book leans ${extras.imbalance > 0 ? 'toward buyers' : 'toward sellers'}: ${Math.round(((Math.abs(extras.imbalance) + 1) / 2) * 100)}% of size near the top is on the ${extras.imbalance > 0 ? 'bid' : 'ask'}.`);
   if (extras.newsCount) out.push(`${extras.newsCount} relevant headline${extras.newsCount > 1 ? 's' : ''} this week, tone ${extras.news > 0.2 ? 'positive' : extras.news < -0.2 ? 'negative' : 'mixed'}.`);
+  if (!modelBeatsMarket && e.net > 0) out.push("Caution: in backtests this model has not beaten Kalshi's own prices, so treat this as a lead to look into.");
   out.push(`Costs already taken out: ${cents(e.fee)} fee and a ${cents(f.spread)} spread.`);
   if (hours < 12) out.push(`Closes in about ${Math.max(1, Math.round(hours))}h, so there is little time for the price to move.`);
   return out;
@@ -151,6 +152,10 @@ async function candidates(deadline, maxDays) {
         const ask = num(m.yes_ask_dollars);
         if (m.market_type !== 'binary' || bid < 0.03 || ask > 0.97 || ask <= bid || ask - bid > 0.08) continue;
         if (num(m.volume_24h_fp) < 500) continue;
+        // Skip anything due to resolve within four hours: most of these are games
+        // in progress, where prices jump faster than this model can follow.
+        const due = m.expected_expiration_time ? new Date(m.expected_expiration_time).getTime() / 1000 : 0;
+        if (due && due - now < 4 * HOUR) continue;
         keep.push(m);
       }
       cursor = d.cursor;
@@ -168,6 +173,7 @@ export async function scan({ budgetMs = 8000, pool = 80, picks = 12, maxDays = 3
   const within = (reserve) => ({ signal: AbortSignal.timeout(Math.max(300, left() - reserve)), retries: 2 });
 
   const { keep, pages, complete } = await candidates(started + budgetMs * 0.6, maxDays);
+  if (!pages) throw new Error('Kalshi did not answer in time (rate limited or unreachable)');
   // Most-traded first, but no more than a few markets per event or a dozen per
   // series, so one busy slate of games cannot crowd everything else out.
   const perEvent = {};

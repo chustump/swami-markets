@@ -247,7 +247,7 @@ function Backtest({ mob }) {
           <div style={{ fontSize: 13.5, color: T.soft, lineHeight: 1.65 }}>
             Buying one contract whenever the model saw at least 2¢ of edge: <b style={{ color: p2.profit >= 0 ? T.green : T.red }}>{money(p2)}</b>.<br />
             Only when it saw at least 5¢: <b style={{ color: p5.profit >= 0 ? T.green : T.red }}>{money(p5)}</b>.
-            {!better && p2.trades < 500 && <><br />That is a small number of bets, mostly on longshots, and too few to tell skill from luck.</>}
+            {!better && p2.trades < 500 && <><br />That is a small number of bets, too few to tell skill from luck.</>}
           </div>
           <div style={{ fontSize: 12, color: T.muted, lineHeight: 1.6, marginTop: 14 }}>
             How this was run: {backtest.sample.usable.toLocaleString()} settled Kalshi markets from {backtest.window.from} to {backtest.window.to}, each scored once at a fixed 30, 54 or 102 hours after it opened, using only data available at that moment. The model was fitted on the earlier {backtest.sample.train.toLocaleString()} and judged on the later {backtest.sample.test.toLocaleString()}. Trades buy at the ask, pay the standard taker fee and hold to settlement.
