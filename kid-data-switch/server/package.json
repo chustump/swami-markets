@@ -1,0 +1,19 @@
+{
+  "name": "kid-data-switch-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Turns a kid's phone data off/on at US Mobile and Cox by driving their websites",
+  "scripts": {
+    "start": "node --env-file=.env src/server.js",
+    "login": "node --env-file=.env src/cli.js login",
+    "record": "node --env-file=.env src/cli.js record",
+    "try": "node --env-file=.env src/cli.js try",
+    "test": "node test/run.js"
+  },
+  "dependencies": {
+    "playwright": "^1.50.0"
+  },
+  "engines": {
+    "node": ">=20.6"
+  }
+}

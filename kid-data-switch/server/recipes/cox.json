@@ -1,0 +1,102 @@
+{
+  "name": "Cox WiFi",
+  "_note": "UNVERIFIED. Cox documents Pause Device in the Panoramic Wifi phone app; this assumes the same control exists in the web portal at the start URL. Check with `npm run try cox off` and fix with `npm run record cox`.",
+  "start": "https://wifi.cox.com/",
+  "ready": {
+    "text": "Devices"
+  },
+  "login": {
+    "when": {
+      "selector": "input[type=password]"
+    },
+    "needs": [
+      "COX_USERNAME",
+      "COX_PASSWORD"
+    ],
+    "steps": [
+      {
+        "do": "fill",
+        "selector": "input[name=username], input[type=email], input[type=text]",
+        "value": "${COX_USERNAME}"
+      },
+      {
+        "do": "fill",
+        "selector": "input[type=password]",
+        "value": "${COX_PASSWORD}"
+      },
+      {
+        "do": "click",
+        "selector": "button[type=submit]"
+      }
+    ]
+  },
+  "off": [
+    {
+      "do": "click",
+      "text": "Devices"
+    },
+    {
+      "do": "click",
+      "text": "${KID_DEVICE_NAME}"
+    },
+    {
+      "do": "stopIf",
+      "role": "button",
+      "name": "Unpause",
+      "otherwise": {
+        "role": "button",
+        "name": "Pause Device"
+      }
+    },
+    {
+      "do": "click",
+      "role": "button",
+      "name": "Pause Device"
+    },
+    {
+      "do": "click",
+      "text": "Until I Unpause",
+      "optional": true
+    },
+    {
+      "do": "click",
+      "role": "button",
+      "name": "Apply",
+      "optional": true
+    },
+    {
+      "do": "waitFor",
+      "role": "button",
+      "name": "Unpause"
+    }
+  ],
+  "on": [
+    {
+      "do": "click",
+      "text": "Devices"
+    },
+    {
+      "do": "click",
+      "text": "${KID_DEVICE_NAME}"
+    },
+    {
+      "do": "stopIf",
+      "role": "button",
+      "name": "Pause Device",
+      "otherwise": {
+        "role": "button",
+        "name": "Unpause"
+      }
+    },
+    {
+      "do": "click",
+      "role": "button",
+      "name": "Unpause"
+    },
+    {
+      "do": "waitFor",
+      "role": "button",
+      "name": "Pause Device"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "name": "US Mobile",
+  "_note": "UNVERIFIED. Written from US Mobile's help article (Lines > line > Line Settings > Usage & Controls > Usage Management > Data Blocker), not from the live site. Check with `npm run try usmobile off` and fix with `npm run record usmobile`.",
+  "start": "https://app.usmobile.com/dashboard",
+  "ready": { "text": "Lines" },
+  "login": {
+    "when": { "selector": "input[type=password], input[type=email]" },
+    "needs": ["USMOBILE_EMAIL", "USMOBILE_PASSWORD"],
+    "steps": [
+      { "do": "fill", "selector": "input[type=email]", "value": "${USMOBILE_EMAIL}" },
+      { "do": "click", "role": "button", "name": "Continue", "optional": true },
+      { "do": "fill", "selector": "input[type=password]", "value": "${USMOBILE_PASSWORD}" },
+      { "do": "click", "selector": "button[type=submit]" }
+    ]
+  },
+  "off": [
+    { "do": "click", "text": "${KID_LINE_NAME}" },
+    { "do": "click", "text": "Line Settings" },
+    { "do": "click", "text": "Usage & Controls" },
+    { "do": "click", "text": "Usage Management" },
+    { "do": "setSwitch", "role": "switch", "name": "Data Blocker", "checked": true },
+    { "do": "click", "role": "button", "name": "Confirm", "optional": true },
+    { "do": "verifySwitch", "role": "switch", "name": "Data Blocker", "checked": true }
+  ],
+  "on": [
+    { "do": "click", "text": "${KID_LINE_NAME}" },
+    { "do": "click", "text": "Line Settings" },
+    { "do": "click", "text": "Usage & Controls" },
+    { "do": "click", "text": "Usage Management" },
+    { "do": "setSwitch", "role": "switch", "name": "Data Blocker", "checked": false },
+    { "do": "click", "role": "button", "name": "Confirm", "optional": true },
+    { "do": "verifySwitch", "role": "switch", "name": "Data Blocker", "checked": false }
+  ]
+}
