@@ -71,7 +71,7 @@ websites as you and clicking the same controls you would.
    npx expo start
    ```
 
-   Open it with the Expo Go app, or build an installable app with
+   Open it with the Expo Go app (or press `w` to preview it in a browser), or build an installable app with
    `npx eas build`. On first launch enter the server address
    (`http://<computer's IP>:8787`) and the `KDS_TOKEN` value.
 
