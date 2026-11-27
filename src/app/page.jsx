@@ -1,106 +1,12 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-
-/* ══════════════════════════════════════════════════════════════
-   INLINE SVG GRAPHICS
-   ══════════════════════════════════════════════════════════════ */
-
-function SwamiMini({ size = 32 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 60 60" style={{ display: "block", flexShrink: 0 }}>
-      <defs>
-        <linearGradient id="mt" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#7c3aed" /><stop offset="100%" stopColor="#ff8c42" /></linearGradient>
-        <radialGradient id="mf" cx="50%" cy="40%" r="50%"><stop offset="0%" stopColor="#ddb892" /><stop offset="100%" stopColor="#c49a6c" /></radialGradient>
-      </defs>
-      <circle cx="30" cy="30" r="29" fill="#a66dff" opacity="0.15" />
-      <circle cx="30" cy="32" r="14" fill="url(#mf)" />
-      <ellipse cx="30" cy="22" rx="16" ry="11" fill="url(#mt)" />
-      <circle cx="30" cy="23" r="3" fill="#ffd700" /><circle cx="30" cy="23" r="1.5" fill="#fff" opacity="0.8" />
-      <circle cx="25" cy="30" r="2" fill="#1a1a2e" /><circle cx="35" cy="30" r="2" fill="#1a1a2e" />
-      <path d="M22 36 Q26 44 30 45 Q34 44 38 36" fill="#d4d4d8" />
-      <path d="M24 35 Q28 33 30 35 Q32 33 36 35" stroke="#ccc" strokeWidth="1.5" fill="none" />
-    </svg>
-  );
-}
-
-function SwamiCharacter({ size = 120 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 200 200" style={{ display: "block" }}>
-      <defs>
-        <radialGradient id="aura" cx="50%" cy="45%" r="50%">
-          <stop offset="0%" stopColor="#a66dff" stopOpacity="0.5" />
-          <stop offset="50%" stopColor="#ff8c42" stopOpacity="0.2" />
-          <stop offset="100%" stopColor="transparent" />
-        </radialGradient>
-        <linearGradient id="turban" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#7c3aed" />
-          <stop offset="50%" stopColor="#a855f7" />
-          <stop offset="100%" stopColor="#ff8c42" />
-        </linearGradient>
-        <linearGradient id="turban2" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#9333ea" />
-          <stop offset="100%" stopColor="#7c3aed" />
-        </linearGradient>
-        <radialGradient id="face" cx="50%" cy="40%" r="50%">
-          <stop offset="0%" stopColor="#ddb892" />
-          <stop offset="100%" stopColor="#c49a6c" />
-        </radialGradient>
-        <radialGradient id="orb" cx="40%" cy="35%" r="50%">
-          <stop offset="0%" stopColor="#e0d0ff" stopOpacity="0.95" />
-          <stop offset="30%" stopColor="#a66dff" stopOpacity="0.5" />
-          <stop offset="70%" stopColor="#7c3aed" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#ff8c42" stopOpacity="0.2" />
-        </radialGradient>
-        <radialGradient id="orbGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#a66dff" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="transparent" />
-        </radialGradient>
-        <filter id="glow1"><feGaussianBlur stdDeviation="3" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-      </defs>
-      <circle cx="100" cy="95" r="95" fill="url(#aura)" />
-      <path d="M60 145 Q65 130 80 125 L100 120 L120 125 Q135 130 140 145 L145 190 L55 190 Z" fill="#7c3aed" opacity="0.8" />
-      <path d="M65 148 Q70 135 82 128 L100 123 L118 128 Q130 135 135 148 L138 185 L62 185 Z" fill="#6d28d9" opacity="0.6" />
-      <rect x="90" y="112" width="20" height="14" rx="5" fill="url(#face)" />
-      <ellipse cx="100" cy="98" rx="32" ry="36" fill="url(#face)" />
-      <ellipse cx="100" cy="68" rx="40" ry="28" fill="url(#turban)" />
-      <ellipse cx="100" cy="62" rx="36" ry="22" fill="url(#turban2)" />
-      <ellipse cx="100" cy="58" rx="30" ry="16" fill="url(#turban)" opacity="0.8" />
-      <path d="M70 68 Q85 50 100 52 Q115 50 130 68" stroke="#ff8c42" strokeWidth="2" fill="none" opacity="0.6" />
-      <path d="M75 72 Q90 56 100 58 Q110 56 125 72" stroke="#ffd700" strokeWidth="1.5" fill="none" opacity="0.4" />
-      <circle cx="100" cy="66" r="7" fill="#ffd700" filter="url(#glow1)" />
-      <circle cx="100" cy="66" r="5" fill="#ffed4a" />
-      <circle cx="100" cy="66" r="3" fill="#fff" opacity="0.8" />
-      <circle cx="98" cy="64" r="1.5" fill="#fff" />
-      <ellipse cx="88" cy="94" rx="5" ry="4" fill="#fff" />
-      <ellipse cx="112" cy="94" rx="5" ry="4" fill="#fff" />
-      <ellipse cx="88" cy="94" rx="3.5" ry="3.5" fill="#1a1a2e" />
-      <ellipse cx="112" cy="94" rx="3.5" ry="3.5" fill="#1a1a2e" />
-      <circle cx="89.5" cy="93" r="1.2" fill="#fff" />
-      <circle cx="113.5" cy="93" r="1.2" fill="#fff" />
-      <path d="M78 87 Q84 82 95 86" stroke="#5a3a1a" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      <path d="M105 86 Q116 82 122 87" stroke="#5a3a1a" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      <path d="M98 97 Q100 103 102 97" stroke="#b08660" strokeWidth="1.5" fill="none" />
-      <path d="M82 107 Q90 102 100 107 Q110 102 118 107" stroke="#d4d4d8" strokeWidth="3" fill="none" strokeLinecap="round" />
-      <path d="M75 110 Q82 135 100 140 Q118 135 125 110" fill="#e5e5e5" />
-      <path d="M78 112 Q86 132 100 136 Q114 132 122 112" fill="#d4d4d8" />
-      <path d="M82 114 Q90 128 100 131 Q110 128 118 114" fill="#c4c4c8" opacity="0.5" />
-      <circle cx="100" cy="175" r="18" fill="url(#orbGlow)" />
-      <circle cx="100" cy="175" r="14" fill="url(#orb)" stroke="#a66dff" strokeWidth="1" />
-      <ellipse cx="96" cy="170" rx="5" ry="3.5" fill="#fff" opacity="0.5" />
-      <circle cx="93" cy="168" r="2" fill="#fff" opacity="0.3" />
-      <path d="M78 160 Q82 168 88 172" stroke="#c49a6c" strokeWidth="5" fill="none" strokeLinecap="round" />
-      <path d="M122 160 Q118 168 112 172" stroke="#c49a6c" strokeWidth="5" fill="none" strokeLinecap="round" />
-      <g filter="url(#glow1)">
-        <circle cx="40" cy="35" r="2.5" fill="#ffd700"><animate attributeName="opacity" values="0.9;0.2;0.9" dur="2s" repeatCount="indefinite" /></circle>
-        <circle cx="160" cy="40" r="2" fill="#a66dff"><animate attributeName="opacity" values="0.7;0.1;0.7" dur="1.7s" repeatCount="indefinite" /></circle>
-        <circle cx="30" cy="110" r="1.5" fill="#ff8c42"><animate attributeName="opacity" values="0.6;0.1;0.6" dur="2.3s" repeatCount="indefinite" /></circle>
-        <circle cx="170" cy="120" r="2" fill="#ffd700"><animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.5s" repeatCount="indefinite" /></circle>
-        <circle cx="55" cy="165" r="1.5" fill="#a66dff"><animate attributeName="opacity" values="0.5;0.1;0.5" dur="2.8s" repeatCount="indefinite" /></circle>
-        <circle cx="145" cy="170" r="2" fill="#ff8c42"><animate attributeName="opacity" values="0.7;0.15;0.7" dur="2.1s" repeatCount="indefinite" /></circle>
-      </g>
-    </svg>
-  );
-}
+import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
+import Swami, { SwamiMini } from "../components/Swami";
+import SwamiGuide from "../components/SwamiGuide";
+import SiteHeader from "../components/SiteHeader";
+import { Scene, Reveal } from "../components/Scene";
+import { swamiSay } from "../components/swamiBus";
+import { T, FONT } from "../lib/theme";
 
 function CrystalBall({ size = 100 }) {
   return (
@@ -151,9 +57,6 @@ function useIsMobile() {
   return m;
 }
 
-/* ══ Theme ═════════════════════════════════════════════════════ */
-const T = { bg: "#060710", sf: "#0c0e16", card: "#11131c", hover: "#191c28", border: "#1b1f30", text: "#e6e8f0", soft: "#a2a6bc", muted: "#636882", dim: "#3c3f54", green: "#00e5b0", red: "#ff5274", blue: "#5890ff", yellow: "#ffc84a", purple: "#a66dff", orange: "#ff8c42", gold: "#FFD700" };
-
 /* ══ Data ══════════════════════════════════════════════════════ */
 const POLY = [
   { id: "p1", q: "Democratic Presidential Nominee 2028", yes: .24, label: "Newsom 24%", vol: "$895M", v24: "$16M", cat: "politics" },
@@ -193,13 +96,13 @@ const H2H = [
 
 /* ══ UI ════════════════════════════════════════════════════════ */
 function pCol(v) { return v > .5 ? T.green : v > .25 ? T.yellow : T.red; }
-function Price({ v, s }) { const f = s === "sm" ? 13 : 17; return <span style={{ fontSize: f, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace", color: pCol(v), background: pCol(v) + "14", padding: "2px 8px", borderRadius: 6, display: "inline-block" }}>{(v * 100).toFixed(0)}<span style={{ fontSize: f * .4, opacity: .6 }}>¢</span></span>; }
+function Price({ v, s }) { const f = s === "sm" ? 13 : 17; return <span style={{ fontSize: f, fontWeight: 800, fontFamily: FONT.mono, color: pCol(v), background: pCol(v) + "14", padding: "2px 8px", borderRadius: 6, display: "inline-block" }}>{(v * 100).toFixed(0)}<span style={{ fontSize: f * .4, opacity: .6 }}>¢</span></span>; }
 function Bdg({ p }) { const i = p === "poly"; return <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: .7, padding: "2px 6px", borderRadius: 4, background: (i ? T.green : T.blue) + "14", color: i ? T.green : T.blue }}>{i ? "POLY" : "KALSHI"}</span>; }
 function PBar({ pct, price }) {
   const c = pct > 60 ? T.green : pct > 40 ? T.yellow : T.red;
   return (<div>
     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 10, color: T.muted }}><span>🔮 Swami: {pct}%</span><span>Market: {price}¢</span></div>
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ flex: 1, height: 6, background: T.border, borderRadius: 3, overflow: "hidden", position: "relative" }}><div style={{ width: `${pct}%`, height: "100%", background: c, borderRadius: 3 }} /><div style={{ position: "absolute", left: `${price}%`, top: -2, width: 2, height: 10, background: T.text, borderRadius: 1, opacity: .5 }} /></div><span style={{ fontSize: 12, fontWeight: 800, color: c, fontFamily: "monospace", minWidth: 36, textAlign: "right" }}>{pct}%</span></div>
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ flex: 1, height: 6, background: T.border, borderRadius: 3, overflow: "hidden", position: "relative" }}><div style={{ width: `${pct}%`, height: "100%", background: c, borderRadius: 3 }} /><div style={{ position: "absolute", left: `${price}%`, top: -2, width: 2, height: 10, background: T.text, borderRadius: 1, opacity: .5 }} /></div><span style={{ fontSize: 12, fontWeight: 800, color: c, fontFamily: FONT.mono, minWidth: 36, textAlign: "right" }}>{pct}%</span></div>
     {pct !== price && <div style={{ fontSize: 11, fontWeight: 700, marginTop: 4, color: pct > price ? T.green : T.red }}>{pct > price ? `▲ +${pct - price}¢ underpriced — BUY` : `▼ ${price - pct}¢ overpriced — FADE`}</div>}
   </div>);
 }
@@ -230,7 +133,8 @@ export default function App() {
     formData.append('email', email);
 
     try {
-      const res = await fetch('/', {
+      // Netlify collects submissions posted to the static form file, not to a Next.js page.
+      const res = await fetch('/__forms.html', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString()
@@ -269,105 +173,211 @@ export default function App() {
     } catch (e) { setAskAns("Error: " + e.message); } finally { setAskLd(false); }
   }, [askQ, askLd]);
 
-  const tabs = [{ k: "home", l: "🔮 Home" }, { k: "top5", l: "🔥 Top 5" }, { k: "h2h", l: "⚔️ H2H" }, { k: "ask", l: "💬 Ask" }, { k: "all", l: "📋 All" }];
+  const tabs = [{ k: "home", l: "🔮 Home" }, { k: "top5", l: "🔥 Top 5" }, { k: "h2h", l: "⚔️ H2H" }, { k: "ask", l: "💬 Ask" }, { k: "all", l: "📋 All" }, { k: "edge", l: "🧿 Edge", href: "/edge" }];
+  const goTab = useCallback((k) => { setTab(k); window.scrollTo({ top: 0 }); }, []);
+
+  // Links from other pages can open a tab directly: /?tab=ask
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if (t && ["top5", "h2h", "ask", "all"].includes(t)) setTab(t);
+  }, []);
+
+  // The big Swami waves hello, then settles.
+  const [heroMood, setHeroMood] = useState("greet");
+  useEffect(() => { const t = setTimeout(() => setHeroMood("calm"), 5200); return () => clearTimeout(t); }, []);
+
+  // Live picks from the Kalshi edge scanner.
+  const [live, setLive] = useState({ state: "loading", picks: [] });
+  useEffect(() => {
+    let off = false;
+    fetch("/api/kalshi/scan").then(r => r.json()).then(d => {
+      if (off) return;
+      if (d.error) return setLive({ state: "error", picks: [] });
+      setLive({ state: "done", picks: (d.markets || []).filter(m => m.edge > 0).slice(0, 3) });
+    }).catch(() => !off && setLive({ state: "error", picks: [] }));
+    return () => { off = true; };
+  }, []);
+  const topPick = live.picks[0];
+  const liveLine = topPick ? `I see it! ${topPick.title}${topPick.subtitle ? `, ${topPick.subtitle}` : ""}: ${topPick.side} at ${(topPick.price * 100).toFixed(0)}¢.` : live.state === "loading" ? "The mists are parting…" : "Today the markets look fairly priced. Even a swami admits it.";
+  const liveVision = topPick ? `+${(topPick.edge * 100).toFixed(0)}¢` : "";
+
+  // The crystal ball swells as its section scrolls through the screen.
+  const orbitRef = useRef(null);
+  useEffect(() => {
+    if (tab !== "home") return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const el = orbitRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const p = 1 - Math.abs((r.top + r.height / 2) / window.innerHeight - 0.5) * 1.6;
+      el.style.setProperty("--p", Math.max(0, Math.min(1, p)).toFixed(3));
+    };
+    const on = () => { if (!frame) frame = requestAnimationFrame(update); };
+    update();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => { window.removeEventListener("scroll", on); cancelAnimationFrame(frame); };
+  }, [tab]);
+
+  // The Swami reacts while a question is being answered.
+  useEffect(() => {
+    if (tab !== "ask") return;
+    if (askLd) swamiSay("gaze", "Consulting the oracle…");
+    else if (askPred) swamiSay("reveal", `${askPred.side}. ${askPred.reasoning || ""}`.trim(), String(askPred.probability || ""));
+  }, [tab, askLd, askPred]);
   const allM = [...POLY.map(m => ({ ...m, _p: "poly" })), ...KALSHI.map(m => ({ ...m, _p: "kalshi" }))];
   const pad = mob ? "0 16px" : "0";
 
   return (
-    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'DM Sans','Segoe UI',system-ui,sans-serif", paddingBottom: "100px" }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <div style={{ minHeight: "100vh", color: T.text, fontFamily: FONT.body, paddingBottom: "120px", position: "relative", zIndex: 1 }}>
 
-      {/* HEADER */}
-      <div style={{ borderBottom: `1px solid ${T.border}`, padding: mob ? "8px 16px" : "10px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", background: T.sf + "ee", backdropFilter: "blur(16px)", position: "sticky", top: 0, zIndex: 100 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: mob ? 8 : 12 }}>
-          <SwamiMini size={mob ? 30 : 36} />
-          <div>
-            <div style={{ fontSize: mob ? 14 : 16, fontWeight: 800 }}>Swami Markets</div>
-            <div style={{ fontSize: mob ? 9 : 10, color: T.dim }}><span style={{ color: T.green }}>Polymarket</span> × <span style={{ color: T.blue }}>Kalshi</span></div>
-          </div>
-        </div>
-        {!mob && <div style={{ display: "flex", gap: 3, background: T.card, borderRadius: 10, padding: 3, border: `1px solid ${T.border}` }}>
-          {tabs.map(t => <button key={t.k} onClick={() => setTab(t.k)} style={{ background: tab === t.k ? T.hover : "transparent", border: "none", borderRadius: 8, padding: "6px 12px", color: tab === t.k ? T.text : T.muted, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}
-        </div>}
-      </div>
-      {mob && <div style={{ display: "flex", borderBottom: `1px solid ${T.border}`, background: T.sf, position: "sticky", top: 46, zIndex: 99 }}>
-        {tabs.map(t => <button key={t.k} onClick={() => setTab(t.k)} style={{ flex: 1, background: "transparent", border: "none", borderBottom: tab === t.k ? `2px solid ${T.orange}` : "2px solid transparent", padding: "8px 4px", color: tab === t.k ? T.text : T.muted, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{t.l}</button>)}
-      </div>}
+      <SiteHeader items={tabs} active={tab} onPick={goTab} mob={mob} />
 
-      <div style={{ maxWidth: 1360, margin: "0 auto", padding: mob ? "14px 0" : "16px 24px" }}>
+      <div style={{ maxWidth: 1120, margin: "0 auto", padding: mob ? "14px 0" : "16px 24px" }}>
 
         {/* ═══════════ HOME ═══════════ */}
         {tab === "home" && <div style={{ padding: pad }}>
-          {/* HERO */}
-          <div style={{ textAlign: "center", padding: mob ? "24px 16px" : "32px 32px", marginBottom: 24, borderRadius: 20, background: `radial-gradient(ellipse at center top, ${T.purple}14, ${T.orange}06 50%, transparent 80%)`, border: `1px solid ${T.orange}22` }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
-              <SwamiCharacter size={mob ? 140 : 180} />
+          {/* 1. THE WELCOME */}
+          <Scene hero mood="greet" say="Welcome, seeker." style={{ minHeight: mob ? "auto" : "calc(100vh - 80px)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: mob ? "18px 6px 36px" : "10px 24px 40px" }}>
+            <Swami size={mob ? 210 : 290} mood={heroMood} />
+            <div className="eyebrow" style={{ marginTop: 6 }}>Polymarket × Kalshi</div>
+            <h1 className="display" style={{ fontSize: mob ? 38 : 68, fontWeight: 900, margin: "10px 0 0", maxWidth: 820 }}>
+              The Swami will <span className="gilded">see you now.</span>
+            </h1>
+            <p style={{ fontSize: mob ? 15 : 18, color: T.soft, maxWidth: 560, margin: "16px auto 0", lineHeight: 1.6 }}>
+              Pull up a cushion. He reads prediction markets the way other swamis read palms: prices, crowds and headlines, turned into a plain yes, no, or not worth it.
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 26, flexWrap: "wrap" }}>
+              <button className="btn gold" onClick={() => goTab("ask")}>🔮 Ask the Swami</button>
+              <Link className="btn ghost" href="/edge">🧿 Today's Kalshi edge</Link>
             </div>
-            <div style={{ fontSize: mob ? 28 : 42, fontWeight: 800, color: T.orange, letterSpacing: -1 }}>The Swami</div>
-            <div style={{ fontSize: mob ? 13 : 16, color: T.soft, marginTop: 4 }}>Your Prediction Markets Oracle</div>
-            <div style={{ fontSize: mob ? 11 : 12, color: T.muted, marginTop: 8, maxWidth: 480, margin: "8px auto 0" }}>Data-driven predictions across Polymarket & Kalshi. Analyzing sentiment, history, and edge to find value.</div>
-            
-            {/* SUB FORM IN HERO */}
-            <form name="waitlist" data-netlify="true" onSubmit={handleSubscribe} style={{ marginTop: 24, padding: 20, background: T.card, borderRadius: 16, border: `1px solid ${T.border}`, maxWidth: 500, margin: "24px auto 0" }}>
-              <input type="hidden" name="form-name" value="waitlist" />
-              <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 12 }}>Join the Oracle Waitlist</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input type="email" name="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" required style={{ flex: 1, background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, padding: "10px 14px", color: T.text, fontSize: 14, outline: "none" }} />
-                <button type="submit" disabled={subStatus === 'loading'} style={{ background: `linear-gradient(135deg, ${T.orange}, ${T.purple})`, border: "none", borderRadius: 10, padding: "10px 20px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: subStatus === 'loading' ? 'wait' : 'pointer' }}>
-                  {subStatus === 'loading' ? '...' : 'Subscribe'}
-                </button>
+            <div style={{ marginTop: mob ? 34 : 54 }}><div className="scroll-cue" aria-hidden="true" /><div style={{ fontSize: 11, color: T.muted, marginTop: 8, letterSpacing: 1 }}>scroll, and he follows</div></div>
+          </Scene>
+
+          {/* 2. THE GAZE */}
+          <Scene mood="gaze" say="Hush now. I am gazing into the markets…" style={{ padding: mob ? "40px 0" : "90px 0" }}>
+            <div ref={orbitRef} className="orbit" style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "1fr 1fr", gap: mob ? 24 : 48, alignItems: "center" }}>
+              <div style={{ position: "relative", display: "flex", justifyContent: "center", minHeight: mob ? 220 : 340, alignItems: "center" }}>
+                <div className="smoke" />
+                <div className="big-ball"><CrystalBall size={mob ? 200 : 300} /></div>
               </div>
-              {subMsg && <div style={{ fontSize: 12, marginTop: 10, color: subStatus === 'success' ? T.green : T.red }}>{subMsg}</div>}
-            </form>
-            
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
-              <button onClick={() => setTab("ask")} style={{ background: `linear-gradient(135deg, ${T.orange}, ${T.purple})`, border: "none", borderRadius: 12, padding: "10px 20px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>💬 Ask Swami Anything</button>
-              <button onClick={() => setTab("h2h")} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: "10px 20px", color: T.soft, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>⚔️ Compare Platforms</button>
+              <div>
+                <Reveal><div className="eyebrow">First, he gazes</div>
+                  <h2 className="display" style={{ fontSize: mob ? 30 : 44, fontWeight: 700, margin: "8px 0 18px" }}>Three things swirl in the ball.</h2></Reveal>
+                {[
+                  { i: "📈", t: "The price", d: "Where it sits, how fast it moved, and whether moves like that have tended to stick." },
+                  { i: "👥", t: "The crowd", d: "Volume, open interest and which side of the order book is leaning harder." },
+                  { i: "📰", t: "The news", d: "Fresh headlines, scored for how relevant they are and which way they lean." },
+                ].map((x, i) => (
+                  <Reveal key={x.t} delay={i * 120} className="panel" style={{ padding: 16, marginBottom: 10, display: "flex", gap: 14, alignItems: "flex-start" }}>
+                    <div style={{ fontSize: 24 }}>{x.i}</div>
+                    <div><div style={{ fontFamily: FONT.display, fontSize: 19, fontWeight: 700 }}>{x.t}</div><div style={{ fontSize: 13.5, color: T.soft, lineHeight: 1.55, marginTop: 2 }}>{x.d}</div></div>
+                  </Reveal>
+                ))}
+              </div>
             </div>
-          </div>
+          </Scene>
 
-          {/* BEST OPPS */}
-          <div style={{ marginBottom: 30 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}><span style={{ fontSize: 16 }}>⚡</span><span style={{ fontSize: 14, fontWeight: 700, color: T.yellow }}>Best Bet Opportunities</span><div style={{ flex: 1, height: 1, background: T.border, marginLeft: 8 }} /></div>
-            <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "repeat(auto-fill, minmax(240px, 1fr))", gap: 8 }}>
-              {OPPS.map((o, i) => <div key={i} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 10, padding: 12, borderLeft: `3px solid ${o.color}` }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, color: o.color, background: o.color + "14", padding: "2px 6px", borderRadius: 4 }}>{o.type}</span><span style={{ fontSize: 12, fontWeight: 800, color: o.color, fontFamily: "monospace" }}>{o.edge}</span></div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: T.text, marginBottom: 4 }}>{o.q}</div>
-                <div style={{ fontSize: 11, color: T.muted }}>{o.desc}</div>
-              </div>)}
+          {/* 3. THE REVEAL (live from the Kalshi edge scanner) */}
+          <Scene mood={live.picks.length ? "reveal" : live.state === "loading" ? "gaze" : "think"} say={liveLine} vision={liveVision} style={{ padding: mob ? "30px 0" : "70px 0" }}>
+            <Reveal style={{ textAlign: "center", marginBottom: 22 }}>
+              <div className="eyebrow">Then, he reveals</div>
+              <h2 className="display" style={{ fontSize: mob ? 30 : 44, fontWeight: 700, margin: "8px 0 8px" }}>Fresh from the crystal ball</h2>
+              <div style={{ fontSize: 13.5, color: T.muted }}>Live Kalshi markets where his number and the price disagree most, after fees.</div>
+            </Reveal>
+            <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "repeat(3, 1fr)", gap: 12 }}>
+              {live.state === "loading" && [0, 1, 2].map((i) => <div key={i} className="shimmer" style={{ height: 150 }} />)}
+              {live.picks.map((m, i) => (
+                <Reveal key={m.ticker} flip delay={i * 140}>
+                  <Link href={`/edge?m=${m.ticker}`} className="panel lift" style={{ display: "block", padding: 16, textDecoration: "none", color: T.text, height: "100%" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                      <span style={{ fontSize: 10, letterSpacing: 1.2, color: T.gold, fontWeight: 700 }}>#{i + 1} · {m.category.toUpperCase()}</span>
+                      <span style={{ fontFamily: FONT.mono, fontWeight: 700, color: T.green }}>+{(m.edge * 100).toFixed(1)}¢</span>
+                    </div>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.35, minHeight: 40 }}>{m.title}{m.subtitle ? ` · ${m.subtitle}` : ""}</div>
+                    <div style={{ display: "flex", gap: 14, marginTop: 12, fontSize: 12, color: T.soft }}>
+                      <span>Buy <b style={{ color: m.side === "YES" ? T.green : T.red }}>{m.side}</b> at {(m.price * 100).toFixed(0)}¢</span>
+                      <span>Swami: {((m.side === "YES" ? m.prob : 1 - m.prob) * 100).toFixed(0)}% chance</span>
+                    </div>
+                  </Link>
+                </Reveal>
+              ))}
+              {live.state === "done" && !live.picks.length && <div className="panel" style={{ gridColumn: "1 / -1", padding: 20, textAlign: "center", color: T.soft, fontSize: 14 }}>No market clears the Swami's bar right now. Fairly priced markets are good news for everyone but oracles.</div>}
+              {live.state === "error" && <div className="panel" style={{ gridColumn: "1 / -1", padding: 20, textAlign: "center", color: T.soft, fontSize: 14 }}>The crystal ball is cloudy. Live Kalshi data is unavailable for the moment.</div>}
             </div>
-          </div>
+            <div style={{ textAlign: "center", marginTop: 18 }}><Link className="btn ghost" href="/edge">Open the full edge scanner →</Link></div>
+            <div style={{ textAlign: "center", marginTop: 12, fontSize: 12, color: T.muted }}>For fun and analysis, not advice. <Link href="/edge#record" style={{ color: T.soft }}>See how his numbers have actually done.</Link></div>
+          </Scene>
 
-          {/* TOP 5 PICKS using Image */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <div style={{ flex: 1, height: 1, background: T.border, marginRight: 8 }} />
-            <span style={{ fontSize: 14, fontWeight: 700, color: T.gold }}>🏆 Swami's Top 5 Recommended Bets</span>
-            <div style={{ flex: 1, height: 1, background: T.border, marginLeft: 8 }} />
-          </div>
-          
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-             <img src="/swami-top-5.jpg" alt="Swami's Top 5 Picks" style={{ maxWidth: "100%", maxHeight: 300, borderRadius: 16, boxShadow: `0 8px 30px ${T.purple}33` }} />
-          </div>
+          {/* 4. BEST OPPS */}
+          <Scene mood="think" say="A few bargains caught my third eye." style={{ padding: mob ? "30px 0" : "60px 0" }}>
+            <Reveal className="divider" style={{ marginBottom: 16 }}><span className="display" style={{ fontSize: mob ? 20 : 26, fontWeight: 700 }}>⚡ Best Bet Opportunities</span></Reveal>
+            <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "repeat(auto-fill, minmax(240px, 1fr))", gap: 10 }}>
+              {OPPS.map((o, i) => <Reveal key={i} delay={i * 70} className="panel lift" style={{ padding: 14, borderLeft: `3px solid ${o.color}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, color: o.color, background: o.color + "14", padding: "2px 6px", borderRadius: 4 }}>{o.type}</span><span style={{ fontSize: 12, fontWeight: 800, color: o.color, fontFamily: FONT.mono }}>{o.edge}</span></div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 4 }}>{o.q}</div>
+                <div style={{ fontSize: 11.5, color: T.muted }}>{o.desc}</div>
+              </Reveal>)}
+            </div>
+          </Scene>
 
-          {PICKS.map(p => {
-            const sc = p.side.includes("YES") ? T.green : p.side.includes("NO") ? T.red : T.yellow;
-            return (<div key={p.rank} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 14, padding: mob ? 14 : 16, marginBottom: 12, backgroundImage: `linear-gradient(135deg, ${sc}06, transparent 60%)` }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg, ${T.orange}33, ${T.purple}33)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900, color: T.gold, fontFamily: "monospace" }}>#{p.rank}</div>
-                  <div><div style={{ fontSize: 13, fontWeight: 700, color: T.text, lineHeight: 1.3 }}>{p.q}</div><div style={{ fontSize: 9, color: T.muted, marginTop: 2 }}><span style={{ color: T.yellow, fontWeight: 700 }}>{p.cat.toUpperCase()}</span> · {p.plat}</div></div>
+          {/* 5. TOP 5 PICKS */}
+          <Scene mood="calm" say="My five favorites. Read the reasons, not only the verdict." style={{ padding: mob ? "30px 0" : "60px 0" }}>
+            <Reveal className="divider" style={{ marginBottom: 18 }}><span className="display" style={{ fontSize: mob ? 20 : 26, fontWeight: 700 }}>🏆 Swami's Top 5</span></Reveal>
+            <Reveal style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
+              <img src="/swami-top-5.jpg" alt="Swami's Top 5 Picks" loading="lazy" style={{ maxWidth: "100%", maxHeight: 300, borderRadius: 18, boxShadow: `0 12px 40px ${T.purple}33` }} />
+            </Reveal>
+            {PICKS.map((p, idx) => {
+              const sc = p.side.includes("YES") ? T.green : p.side.includes("NO") ? T.red : T.yellow;
+              return (<Reveal key={p.rank} delay={Math.min(idx, 2) * 80} className="panel" style={{ padding: mob ? 14 : 18, marginBottom: 12, backgroundImage: `linear-gradient(135deg, ${sc}0a, transparent 60%)` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: "50%", background: `linear-gradient(135deg, ${T.orange}44, ${T.purple}44)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900, color: T.gold, fontFamily: FONT.mono, flexShrink: 0 }}>#{p.rank}</div>
+                    <div><div style={{ fontSize: 14, fontWeight: 700, color: T.text, lineHeight: 1.3 }}>{p.q}</div><div style={{ fontSize: 10, color: T.muted, marginTop: 2 }}><span style={{ color: T.yellow, fontWeight: 700 }}>{p.cat.toUpperCase()}</span> · {p.plat}</div></div>
+                  </div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}><div style={{ fontSize: 18, fontWeight: 800, color: sc, fontFamily: FONT.mono }}>{p.side}</div><div style={{ fontSize: 10, color: T.muted }}>{p.conf}</div></div>
                 </div>
-                <div style={{ textAlign: "right", flexShrink: 0 }}><div style={{ fontSize: 18, fontWeight: 800, color: sc, fontFamily: "monospace" }}>{p.side}</div><div style={{ fontSize: 10, color: T.muted }}>{p.conf}</div></div>
-              </div>
-              <div style={{ marginBottom: 12 }}><PBar pct={p.prob} price={p.price} /></div>
-              <div style={{ fontSize: 12, color: T.soft, lineHeight: 1.6, marginBottom: 10 }}>{p.why}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>{p.facts.map((f, i) => <div key={i} style={{ display: "flex", gap: 6, fontSize: 11, color: T.muted }}><span style={{ color: T.gold }}>✦</span><span>{f}</span></div>)}</div>
-            </div>);
-          })}
+                <div style={{ marginBottom: 12 }}><PBar pct={p.prob} price={p.price} /></div>
+                <div style={{ fontSize: 13, color: T.soft, lineHeight: 1.6, marginBottom: 10 }}>{p.why}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>{p.facts.map((f, i) => <div key={i} style={{ display: "flex", gap: 6, fontSize: 11.5, color: T.muted }}><span style={{ color: T.gold }}>✦</span><span>{f}</span></div>)}</div>
+              </Reveal>);
+            })}
+          </Scene>
+
+          {/* 6. ASK */}
+          <Scene mood="think" say="Go on, ask me anything. Yes-or-no questions are my specialty." style={{ padding: mob ? "30px 0" : "70px 0" }}>
+            <Reveal className="panel" style={{ padding: mob ? 20 : 36, textAlign: "center", backgroundImage: `radial-gradient(ellipse at 50% 0%, ${T.purple}22, transparent 70%)` }}>
+              <div className="eyebrow">Your turn</div>
+              <h2 className="display" style={{ fontSize: mob ? 28 : 42, fontWeight: 700, margin: "8px 0 16px" }}>What weighs on your mind?</h2>
+              <form onSubmit={(e) => { e.preventDefault(); goTab("ask"); if (askQ.trim()) askSwami(); }} style={{ display: "flex", gap: 8, maxWidth: 560, margin: "0 auto", flexWrap: mob ? "wrap" : "nowrap" }}>
+                <input type="text" value={askQ} onChange={e => setAskQ(e.target.value)} aria-label="Your question for the Swami" placeholder="Will Bitcoin hit $150K by end of 2026?" style={{ flex: "1 1 220px", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 999, padding: "13px 18px", color: T.text, fontSize: 15, outline: "none" }} />
+                <button className="btn gold" type="submit" style={{ flex: mob ? "1 1 100%" : "none" }}>🔮 Ask</button>
+              </form>
+            </Reveal>
+          </Scene>
+
+          {/* 7. WAITLIST */}
+          <Scene mood="greet" say="Leave your email and I shall summon you when the full oracle opens." style={{ padding: mob ? "20px 0 30px" : "30px 0 60px" }}>
+            <Reveal>
+              <form name="waitlist" method="POST" action="/__forms.html" onSubmit={handleSubscribe} className="panel" style={{ padding: 22, maxWidth: 520, margin: "0 auto", textAlign: "center" }}>
+                <input type="hidden" name="form-name" value="waitlist" />
+                <input type="text" name="bot-field" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ display: "none" }} />
+                <div style={{ fontFamily: FONT.display, fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Join the Oracle Waitlist</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input type="email" name="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" aria-label="Email address" required style={{ flex: 1, minWidth: 0, background: T.bg, border: `1px solid ${T.border}`, borderRadius: 999, padding: "11px 16px", color: T.text, fontSize: 14, outline: "none" }} />
+                  <button type="submit" className="btn gold" disabled={subStatus === 'loading'} style={{ cursor: subStatus === 'loading' ? 'wait' : 'pointer' }}>
+                    {subStatus === 'loading' ? '…' : 'Subscribe'}
+                  </button>
+                </div>
+                {subMsg && <div style={{ fontSize: 12, marginTop: 10, color: subStatus === 'success' ? T.green : T.red }}>{subMsg}</div>}
+              </form>
+            </Reveal>
+          </Scene>
         </div>}
 
         {/* ═══════════ TOP 5 ═══════════ */}
-        {tab === "top5" && <div style={{ padding: pad }}>
+        {tab === "top5" && <Scene as="div" mood="calm" say="The busiest markets on each platform. Tap one to look closer." style={{ padding: pad }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
              <img src="/swami-top-5.jpg" alt="Swami's Top 5 Picks" style={{ maxWidth: "100%", maxHeight: 300, borderRadius: 16, boxShadow: `0 8px 30px ${T.purple}33` }} />
           </div>
@@ -376,17 +386,17 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, paddingRight: mob ? 16 : 0 }}><div style={{ width: 8, height: 8, borderRadius: "50%", background: sec.c }} /><span style={{ fontSize: mob ? 13 : 14, fontWeight: 700, color: sec.c }}>{sec.n}</span><span style={{ fontSize: 11, color: T.muted }}>Top 5</span><div style={{ flex: 1, height: 1, background: T.border, marginLeft: 8 }} /></div>
             <div style={mob ? { display: "flex", gap: 10, overflowX: "auto", paddingRight: 16, paddingBottom: 8 } : { display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 10 }}>
               {sec.d.map((m, i) => <div key={m.id} onClick={() => { setSel(m); setSelP(sec.pl); }} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: mob ? 14 : 12, padding: mob ? 14 : "12px 14px", cursor: "pointer", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: mob ? 120 : 135, minWidth: mob ? 220 : "auto", maxWidth: mob ? 240 : "none", flexShrink: 0 }}>
-                <div style={{ position: "absolute", top: 0, right: 0, width: 24, height: 24, background: sec.c + "14", borderRadius: "0 12px 0 8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: sec.c, fontFamily: "monospace" }}>{i + 1}</div>
+                <div style={{ position: "absolute", top: 0, right: 0, width: 24, height: 24, background: sec.c + "14", borderRadius: "0 12px 0 8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: sec.c, fontFamily: FONT.mono }}>{i + 1}</div>
                 <div><div style={{ marginBottom: 6 }}><Price v={m.yes} /></div><div style={{ fontSize: 10, color: sec.c, fontWeight: 600, marginBottom: 3 }}>{m.label}</div><div style={{ fontSize: mob ? 12 : 11.5, fontWeight: 600, color: T.text, lineHeight: 1.4, paddingRight: 14, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{m.q}</div></div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: T.muted, marginTop: 8 }}><span>{m.vol}</span><span>24h {m.v24}</span></div>
               </div>)}
             </div>
           </div>
-        ))}</div>}
+        ))}</Scene>}
 
         {/* ═══════════ H2H ═══════════ */}
-        {tab === "h2h" && <div style={{ padding: pad }}>
-          <div style={{ fontSize: mob ? 14 : 15, fontWeight: 700, marginBottom: 14 }}>⚔️ Same Bet, Two Platforms</div>
+        {tab === "h2h" && <Scene as="div" mood="think" say="Same question, two prices. I do enjoy a disagreement." style={{ padding: pad }}>
+          <h1 className="display" style={{ fontSize: mob ? 26 : 36, fontWeight: 700, margin: "6px 0 16px" }}>⚔️ Same Bet, Two Platforms</h1>
           {sp && <div style={{ background: T.card, border: `1px solid ${T.orange}33`, borderRadius: 14, padding: 16, marginBottom: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}><SwamiMini size={32} /><div><div style={{ fontSize: 13, fontWeight: 700, color: T.orange }}>Swami's Analysis</div><div style={{ fontSize: 10, color: T.muted }}>{sp.topic}</div></div></div>
@@ -415,13 +425,13 @@ export default function App() {
               <div style={{ clear: "both" }} />
             </div>);
           })}
-        </div>}
+        </Scene>}
 
         {/* ═══════════ ASK ═══════════ */}
-        {tab === "ask" && <div style={{ padding: pad }}>
+        {tab === "ask" && <Scene as="div" mood="think" say="Type your question. I will consult the ball." style={{ padding: pad, maxWidth: 760, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 24 }}>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}><CrystalBall size={mob ? 100 : 130} /></div>
-            <div style={{ fontSize: mob ? 22 : 28, fontWeight: 800, color: T.orange }}>Ask The Swami</div>
+            <h1 className="display gilded" style={{ fontSize: mob ? 30 : 44, fontWeight: 900, margin: 0 }}>Ask The Swami</h1>
             <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
               <img src="/ask-swami.jpg" alt="Ask The Swami" style={{ maxWidth: "100%", maxHeight: 350, borderRadius: 16, boxShadow: `0 10px 40px ${T.purple}44` }} />
             </div>
@@ -439,7 +449,7 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}><SwamiMini size={28} /><span style={{ fontSize: 11, fontWeight: 700, color: T.orange, letterSpacing: 1 }}>SWAMI'S VERDICT</span></div>
             <div style={{ fontSize: 12, color: T.muted, marginBottom: 12 }}>{askQ}</div>
             <div style={{ background: sCol(askPred.side) + "14", border: `1px solid ${sCol(askPred.side)}33`, borderRadius: 12, padding: 16, textAlign: "center", marginBottom: 14 }}>
-              <div style={{ fontSize: 32, fontWeight: 800, color: sCol(askPred.side), fontFamily: "monospace" }}>{askPred.side}</div>
+              <div style={{ fontSize: 32, fontWeight: 800, color: sCol(askPred.side), fontFamily: FONT.mono }}>{askPred.side}</div>
               <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 8 }}>
                 <div><div style={{ fontSize: 9, color: T.muted, letterSpacing: 1 }}>CONFIDENCE</div><div style={{ fontSize: 14, fontWeight: 700, color: T.text }}>{askPred.confidence}</div></div>
                 <div><div style={{ fontSize: 9, color: T.muted, letterSpacing: 1 }}>PROBABILITY</div><div style={{ fontSize: 14, fontWeight: 700, color: T.text }}>{askPred.probability}</div></div>
@@ -448,12 +458,12 @@ export default function App() {
             </div>
             <div style={{ fontSize: 12.5, color: T.soft, lineHeight: 1.75 }}>{askAns}</div>
           </div>}
-          {askHist.length > 0 && <div><div style={{ fontSize: 11, fontWeight: 700, color: T.muted, letterSpacing: 1, marginBottom: 8 }}>RECENT</div>{askHist.map((h, i) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, marginBottom: 4 }}><span style={{ fontSize: 11, fontWeight: 800, color: sCol(h.side), fontFamily: "monospace", minWidth: 65 }}>{h.side}</span><span style={{ fontSize: 11, color: T.muted, minWidth: 32 }}>{h.probability}</span><span style={{ fontSize: 12, color: T.soft, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.q}</span></div>)}</div>}
+          {askHist.length > 0 && <div><div style={{ fontSize: 11, fontWeight: 700, color: T.muted, letterSpacing: 1, marginBottom: 8 }}>RECENT</div>{askHist.map((h, i) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, marginBottom: 4 }}><span style={{ fontSize: 11, fontWeight: 800, color: sCol(h.side), fontFamily: FONT.mono, minWidth: 65 }}>{h.side}</span><span style={{ fontSize: 11, color: T.muted, minWidth: 32 }}>{h.probability}</span><span style={{ fontSize: 12, color: T.soft, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.q}</span></div>)}</div>}
           {!askPred && !askLd && <div><div style={{ fontSize: 11, color: T.muted, marginBottom: 8 }}>Try asking:</div><div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{["Will Trump run in 2028?", "Bitcoin $200K by 2027?", "AI replace engineers?", "Lakers NBA title?", "US recession 2027?"].map(s => <button key={s} onClick={() => setAskQ(s)} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, padding: "6px 10px", color: T.soft, fontSize: 11, cursor: "pointer" }}>{s}</button>)}</div></div>}
-        </div>}
+        </Scene>}
 
         {/* ═══════════ ALL ═══════════ */}
-        {tab === "all" && <div style={{ padding: pad }}>
+        {tab === "all" && <Scene as="div" mood="calm" say="Every market I am watching." style={{ padding: pad }}>
           <div style={{ background: T.card, borderRadius: 12, border: `1px solid ${T.border}`, overflow: "hidden" }}>
             {allM.map(m => <div key={m.id} onClick={() => { setSel(m); setSelP(m._p); }} style={{ padding: "10px 14px", borderBottom: `1px solid ${T.border}`, cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.background = T.hover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 3 }}>
@@ -463,8 +473,13 @@ export default function App() {
               <div style={{ display: "flex", gap: 12, fontSize: 10, color: T.muted }}><span>{m.vol}</span><span>24h {m.v24}</span></div>
             </div>)}
           </div>
-        </div>}
+        </Scene>}
+
+        <footer style={{ textAlign: "center", fontSize: 11.5, color: T.muted, padding: "34px 16px 0", lineHeight: 1.6 }}>
+          For entertainment and analysis only. Not financial advice. The Swami places no trades and holds no accounts.
+        </footer>
       </div>
+      <SwamiGuide />
 
       {/* Detail Modal / Sheet */}
       {sel && <>
@@ -474,8 +489,8 @@ export default function App() {
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}><Bdg p={selP} /><button onClick={() => setSel(null)} style={{ background: "none", border: "none", color: T.muted, fontSize: 20, cursor: "pointer" }}>✕</button></div>
           <div style={{ fontSize: mob ? 16 : 18, fontWeight: 700, color: T.text, lineHeight: 1.4, marginBottom: 16 }}>{sel.q}</div>
           <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-            <div style={{ flex: 1, background: T.green + "14", borderRadius: 12, padding: 12, textAlign: "center" }}><div style={{ fontSize: 9, color: T.green, fontWeight: 700 }}>YES</div><div style={{ fontSize: 28, fontWeight: 800, color: T.green, fontFamily: "monospace" }}>{(sel.yes * 100).toFixed(0)}¢</div></div>
-            <div style={{ flex: 1, background: T.red + "14", borderRadius: 12, padding: 12, textAlign: "center" }}><div style={{ fontSize: 9, color: T.red, fontWeight: 700 }}>NO</div><div style={{ fontSize: 28, fontWeight: 800, color: T.red, fontFamily: "monospace" }}>{((1 - sel.yes) * 100).toFixed(0)}¢</div></div>
+            <div style={{ flex: 1, background: T.green + "14", borderRadius: 12, padding: 12, textAlign: "center" }}><div style={{ fontSize: 9, color: T.green, fontWeight: 700 }}>YES</div><div style={{ fontSize: 28, fontWeight: 800, color: T.green, fontFamily: FONT.mono }}>{(sel.yes * 100).toFixed(0)}¢</div></div>
+            <div style={{ flex: 1, background: T.red + "14", borderRadius: 12, padding: 12, textAlign: "center" }}><div style={{ fontSize: 9, color: T.red, fontWeight: 700 }}>NO</div><div style={{ fontSize: 28, fontWeight: 800, color: T.red, fontFamily: FONT.mono }}>{((1 - sel.yes) * 100).toFixed(0)}¢</div></div>
           </div>
           <a href={`https://${selP === "poly" ? "polymarket.com" : "kalshi.com"}`} target="_blank" rel="noreferrer" style={{ display: "block", textDecoration: "none", background: `linear-gradient(135deg, ${selP === "poly" ? "#00c896" : "#2e7cf6"}, ${T.purple})`, color: "#fff", textAlign: "center", padding: "14px", borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
             Place Trade on {selP === "poly" ? "Polymarket" : "Kalshi"} ⚡
@@ -483,7 +498,6 @@ export default function App() {
         </div>
       </>}
 
-      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}input::placeholder{color:${T.dim}}::-webkit-scrollbar{width:5px;height:0}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:${T.border};border-radius:3px}*{-webkit-tap-highlight-color:transparent}`}</style>
     </div>
   );
 }

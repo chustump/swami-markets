@@ -1,0 +1,251 @@
+{
+  "generated": "2026-11-24T01:33:59.263Z",
+  "window": {
+    "from": "2026-10-05",
+    "to": "2026-11-24"
+  },
+  "sample": {
+    "settledMarketsSeen": 1186832,
+    "candidates": 12608,
+    "usable": 1637,
+    "train": 982,
+    "test": 655,
+    "trainThrough": "2026-11-01"
+  },
+  "rules": {
+    "minVolume": 3000,
+    "scoredHoursAfterOpen": [
+      30,
+      54,
+      102
+    ],
+    "minVolumePrior24h": 200,
+    "maxPerEvent": 3,
+    "priceRange": [
+      0.03,
+      0.97
+    ],
+    "maxSpread": 0.1,
+    "sampleWindowHours": 2,
+    "pagesPerWindow": 2
+  },
+  "features": [
+    "bias",
+    "price",
+    "trend24h",
+    "momentum6h",
+    "trendOnVolume"
+  ],
+  "coef": [
+    -0.028,
+    0.7897,
+    0.1427,
+    0.2228,
+    0.0466
+  ],
+  "test": {
+    "n": 655,
+    "brierModel": 0.1844,
+    "brierMarket": 0.184,
+    "brierDiff": 0.0004,
+    "brierDiffCI": [
+      -0.0018,
+      0.0026
+    ],
+    "calibration": [
+      {
+        "bin": "0-10%",
+        "n": 70,
+        "predicted": 0.0712,
+        "market": 0.0604,
+        "actual": 0.0571
+      },
+      {
+        "bin": "10-20%",
+        "n": 58,
+        "predicted": 0.1493,
+        "market": 0.1341,
+        "actual": 0.1552
+      },
+      {
+        "bin": "20-30%",
+        "n": 71,
+        "predicted": 0.2565,
+        "market": 0.2286,
+        "actual": 0.2394
+      },
+      {
+        "bin": "30-40%",
+        "n": 71,
+        "predicted": 0.3515,
+        "market": 0.3268,
+        "actual": 0.3662
+      },
+      {
+        "bin": "40-50%",
+        "n": 116,
+        "predicted": 0.4592,
+        "market": 0.4544,
+        "actual": 0.4052
+      },
+      {
+        "bin": "50-60%",
+        "n": 122,
+        "predicted": 0.538,
+        "market": 0.5487,
+        "actual": 0.5328
+      },
+      {
+        "bin": "60-70%",
+        "n": 47,
+        "predicted": 0.6403,
+        "market": 0.6474,
+        "actual": 0.6383
+      },
+      {
+        "bin": "70-80%",
+        "n": 42,
+        "predicted": 0.75,
+        "market": 0.7544,
+        "actual": 0.7143
+      },
+      {
+        "bin": "80-90%",
+        "n": 31,
+        "predicted": 0.85,
+        "market": 0.8579,
+        "actual": 0.9677
+      },
+      {
+        "bin": "90-100%",
+        "n": 27,
+        "predicted": 0.9443,
+        "market": 0.9348,
+        "actual": 0.963
+      }
+    ],
+    "pnl": [
+      {
+        "threshold": 0.02,
+        "trades": 118,
+        "winRate": 0.339,
+        "profit": -2.527,
+        "staked": 42.527,
+        "fees": 1.577,
+        "roi": -0.0594
+      },
+      {
+        "threshold": 0.05,
+        "trades": 6,
+        "winRate": 0,
+        "profit": -2.8627,
+        "staked": 2.8627,
+        "fees": 0.1027,
+        "roi": -1
+      }
+    ]
+  },
+  "train": {
+    "n": 982,
+    "brierModel": 0.1978,
+    "brierMarket": 0.1993,
+    "brierDiff": -0.0014,
+    "brierDiffCI": [
+      -0.0032,
+      0.0003
+    ],
+    "calibration": [
+      {
+        "bin": "0-10%",
+        "n": 84,
+        "predicted": 0.0714,
+        "market": 0.0604,
+        "actual": 0.0952
+      },
+      {
+        "bin": "10-20%",
+        "n": 107,
+        "predicted": 0.1475,
+        "market": 0.1184,
+        "actual": 0.1121
+      },
+      {
+        "bin": "20-30%",
+        "n": 119,
+        "predicted": 0.2538,
+        "market": 0.2184,
+        "actual": 0.2353
+      },
+      {
+        "bin": "30-40%",
+        "n": 94,
+        "predicted": 0.3544,
+        "market": 0.327,
+        "actual": 0.3936
+      },
+      {
+        "bin": "40-50%",
+        "n": 229,
+        "predicted": 0.456,
+        "market": 0.4531,
+        "actual": 0.476
+      },
+      {
+        "bin": "50-60%",
+        "n": 167,
+        "predicted": 0.5372,
+        "market": 0.5507,
+        "actual": 0.5808
+      },
+      {
+        "bin": "60-70%",
+        "n": 64,
+        "predicted": 0.6491,
+        "market": 0.6762,
+        "actual": 0.5625
+      },
+      {
+        "bin": "70-80%",
+        "n": 52,
+        "predicted": 0.7337,
+        "market": 0.7528,
+        "actual": 0.75
+      },
+      {
+        "bin": "80-90%",
+        "n": 31,
+        "predicted": 0.8523,
+        "market": 0.8708,
+        "actual": 0.7097
+      },
+      {
+        "bin": "90-100%",
+        "n": 35,
+        "predicted": 0.9331,
+        "market": 0.9341,
+        "actual": 0.9429
+      }
+    ],
+    "pnl": [
+      {
+        "threshold": 0.02,
+        "trades": 203,
+        "winRate": 0.2709,
+        "profit": -3.0003,
+        "staked": 58.0003,
+        "fees": 2.5403,
+        "roi": -0.0517
+      },
+      {
+        "threshold": 0.05,
+        "trades": 7,
+        "winRate": 0.7143,
+        "profit": 1.631,
+        "staked": 3.369,
+        "fees": 0.119,
+        "roi": 0.4841
+      }
+    ]
+  },
+  "hoursToCloseMedian": 20
+}

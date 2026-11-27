@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { askClaude } from '../../../lib/claude';
 
 export async function POST(request) {
   try {
@@ -17,26 +18,7 @@ Predict: "${question.trim()}"
 JSON no backticks:
 {"side":"YES/NO/LEAN YES/LEAN NO/TOSS-UP","confidence":"High/Medium/Low","probability":"XX%","reasoning":"One sentence","analysis":"4-6 sentences: smart money, history, social sentiment, your take."}`;
 
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 600,
-        messages: [{ role: "user", content: prompt }]
-      })
-    });
-
-    const d = await r.json();
-    if (!r.ok) {
-      throw new Error(d.error?.message || 'Anthropic API Error');
-    }
-
-    const raw = (d.content || []).map(b => b.text || "").join("");
+    const raw = await askClaude(prompt, 2000);
     return NextResponse.json({ raw });
   } catch (error) {
     console.error('Ask error:', error);
